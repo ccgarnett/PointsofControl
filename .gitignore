@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Environment variables (sensitive)
+.env
+.env.*
+.env.txt
+
+# Build / output
+build/
+dist/
+coverage/
+
+# IDE / OS
+.DS_Store
+*.log
