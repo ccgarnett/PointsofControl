@@ -1,25 +1,24 @@
 import React from 'react';
-import logo from './logo.svg';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
+import Dashboard from './components/Dashboard';
+import Profile from './components/Profile';
+import CreateCourse from './components/CreateCourse';
+import CourseDetail from './components/CourseDetail';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/courses" element={<Dashboard />} />
+        <Route path="/courses/:id" element={<CourseDetail />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/admin/courses/create" element={<CreateCourse />} />
+        <Route path="/messages" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
