@@ -3,6 +3,12 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IUser extends Document {
   username: string;
+  email?: string;
+  name?: string;
+  age?: number;
+  pronouns?: string;
+  bio?: string;
+  profilePictureUrl?: string;
   passwordHash: string;
   role: 'Admin' | 'User'; // Restricted to the two roles defined 
   enrolledCourses: mongoose.Types.ObjectId[]; 
@@ -15,6 +21,35 @@ const UserSchema: Schema = new Schema({
     type: String,
     required: true,
     unique: true,
+    trim: true
+  },
+  email: {
+    type: String,
+    required: false,
+    trim: true
+  },
+  name: {
+    type: String,
+    required: false,
+    trim: true
+  },
+  age: {
+    type: Number,
+    required: false
+  },
+  pronouns: {
+    type: String,
+    required: false,
+    trim: true
+  },
+  bio: {
+    type: String,
+    required: false,
+    trim: true
+  },
+  profilePictureUrl: {
+    type: String,
+    required: false,
     trim: true
   },
   passwordHash: {
