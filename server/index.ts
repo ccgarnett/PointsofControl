@@ -3,8 +3,8 @@ import path from 'path';
 import express from 'express';
 import cors from 'cors';
 import connectDB from './src/config/db';
-import { getCourses, createCourse } from './courseController';
-import { getProfile, updateProfile, uploadPicture, uploadProfilePicture } from './userController';
+import { getCourses, createCourse } from './src/config/courseController';
+import { getProfile, updateProfile, uploadPicture, uploadProfilePicture } from './src/config/userController';
 
 connectDB();
 
