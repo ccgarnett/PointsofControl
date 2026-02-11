@@ -39,9 +39,6 @@ describe('User Controller', () => {
     // Verifies the progress calculation logic in userController.ts
     expect(res.body.enrolledCourses[0].progress).toBe(50); 
   });
-});
-
-describe('User Controller', () =>{
   it('should create a new user', async () => {
     (User.findOne as jest.Mock).mockResolvedValue(null);
     (bcrypt.hash as jest.Mock).mockResolvedValue('hashed_password');

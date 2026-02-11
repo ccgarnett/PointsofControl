@@ -29,7 +29,7 @@ export const registerUser = async (req: Request, res: Response) => {
   } catch (error) {
     res.status(500).json({message: 'Server Error'});
   }
-}
+};
 
 // 1. Export the Multer middleware
 export const uploadProfilePicture = multer({ dest: 'uploads/' }).single('picture');
