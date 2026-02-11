@@ -40,3 +40,25 @@ describe('User Controller', () => {
     expect(res.body.enrolledCourses[0].progress).toBe(50); 
   });
 });
+
+describe('User Controller', () =>{
+  it('should create a new user', async () => {
+    (User.findOne as jest.Mock).mockResolvedValue(null);
+    (bcrypt.hash as jest.Mock).mockResolvedValue('hashed_password');
+    (User.create as jest.Mock).mockResolvedValue({ _id: '1', username: 'testuser' });
+
+    const res = await request(app).post('/api/users/register').send({ username: 'testuser', passwordHash: '2468XXII', email: 'name@example.com' });
+    expect(res.status).toBe(201);
+  });
+  
+  it('should fail if fields are missing', async () => {
+    const res = await request(app).post('/api/users/register').send({});
+    expect(res.status).toBe(400);
+  });
+
+  it('should fail if username is in database', async () => {
+    (User.findOne as jest.Mock).mockResolvedValue({ username: 'testuser' });
+    const res = await request(app).post('/api/users/register').send({ username: 'testuser', passwordHash: '2468XXII', email: 'name@example.com' });
+    expect(res.status).toBe(400);
+  });
+});
