@@ -25,6 +25,8 @@ import {
   updateMessage,
   deleteMessage,
 } from './src/config/messageController';
+import { getCourses, createCourse } from './src/config/courseController';
+import { registerUser, getProfile, updateProfile, uploadPicture, uploadProfilePicture } from './src/config/userController';
 
 connectDB();
 
