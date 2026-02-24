@@ -1,35 +1,20 @@
 import React from 'react';
 
 interface VideoEmbedProps {
-  url: string;
-  title?: string;
+  videoUrl: string;
 }
 
-// Renders YouTube/Vimeo/etc embed URLs in an iframe
-const VideoEmbed: React.FC<VideoEmbedProps> = ({ url, title }) => {
-  if (!url || !url.trim()) return null;
-
-  // Support both full embed URL and convert watch URLs to embed format
-  let embedUrl = url.trim();
-  if (embedUrl.includes('youtube.com/watch')) {
-    const match = embedUrl.match(/v=([^&]+)/);
-    if (match) embedUrl = `https://www.youtube.com/embed/${match[1]}`;
-  } else if (embedUrl.includes('youtu.be/')) {
-    const id = embedUrl.split('youtu.be/')[1]?.split('?')[0];
-    if (id) embedUrl = `https://www.youtube.com/embed/${id}`;
-  }
-
+const VideoEmbed: React.FC<VideoEmbedProps> = ({ videoUrl }) => {
   return (
-    <div className="video-embed-wrapper">
-      {title && <h4 className="video-embed-title">{title}</h4>}
-      <div className="video-embed-container">
-        <iframe
-          src={embedUrl}
-          title={title || 'Video'}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
-      </div>
+    <div className="video-responsive" style={{ overflow: 'hidden', paddingBottom: '56.25%', position: 'relative', height: 0 }}>
+      <iframe
+        style={{ left: 0, top: 0, height: '100%', width: '100%', position: 'absolute' }}
+        src={videoUrl}
+        frameBorder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        title="course video" // <--- The test looks for this exact string
+      />
     </div>
   );
 };

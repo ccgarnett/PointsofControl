@@ -1,10 +1,13 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './App.css';
 import Dashboard from './components/Dashboard';
 import Profile from './components/Profile';
 import CreateCourse from './components/CreateCourse';
 import CourseDetail from './components/CourseDetail';
+import AdminMessages from './components/AdminMessages';
+import AdminUploadDocs from './components/AdminUploadDocs';
+import AdminAnalytics from './components/AdminAnalytics';
 
 function App() {
   return (
@@ -16,7 +19,9 @@ function App() {
         <Route path="/courses/:id" element={<CourseDetail />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/admin/courses/create" element={<CreateCourse />} />
-        <Route path="/messages" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/admin/docs" element={<AdminUploadDocs />} />
+        <Route path="/admin/analytics" element={<AdminAnalytics />} />
+        <Route path="/messages" element={<AdminMessages />} />
       </Routes>
     </BrowserRouter>
   );
