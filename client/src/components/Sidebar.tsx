@@ -1,16 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-// You can install 'react-icons' for real icons, using text placeholders for now per the low-fidelity mock.
-import './Sidebar.css'; 
+import './Sidebar.css';
 
 const Sidebar: React.FC = () => {
   return (
     <div className="sidebar">
       <div className="logo-section">
-        {/* Hamburger menu icon from mockup */}
-        <span className="menu-icon">☰</span> 
+        <span className="menu-icon">☰</span>
       </div>
-      
+
       <nav className="nav-links">
         <Link to="/dashboard" className="nav-item">
           <div className="icon">🏠</div>
@@ -35,6 +33,16 @@ const Sidebar: React.FC = () => {
         <Link to="/admin/courses/create" className="nav-item">
           <div className="icon">➕</div>
           <span>Create Course</span>
+        </Link>
+
+        <Link to="/admin/docs" className="nav-item">
+          <div className="icon">📄</div>
+          <span>Upload Docs</span>
+        </Link>
+
+        <Link to="/admin/analytics" className="nav-item">
+          <div className="icon">📊</div>
+          <span>Analytics</span>
         </Link>
       </nav>
     </div>
