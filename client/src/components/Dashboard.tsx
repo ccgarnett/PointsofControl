@@ -23,7 +23,7 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchCourses = () => {
     fetch('/api/courses')
       .then((res) => res.json())
       .then((data: Omit<Course, 'progress'>[]) => {
@@ -40,14 +40,26 @@ const Dashboard: React.FC = () => {
         setError(err.message);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchCourses();
   }, []);
 
-  if (loading) {
-    return <div className="dashboard-layout">Loading...</div>;
-  }
-  if (error) {
-    return <div className="dashboard-layout">Error: {error}</div>;
-  }
+  const handleDelete = async (e: React.MouseEvent, courseId: string) => {
+    e.preventDefault();
+    if (!window.confirm('Are you sure you want to delete this course?')) return;
+    try {
+      const res = await fetch(`/api/courses/${courseId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete');
+      fetchCourses();
+    } catch {
+      alert('Could not delete course. Please try again.');
+    }
+  };
+
+  if (loading) return <div className="dashboard-layout">Loading...</div>;
+  if (error) return <div className="dashboard-layout">Error: {error}</div>;
 
   return (
     <div className="dashboard-layout">
@@ -64,29 +76,43 @@ const Dashboard: React.FC = () => {
             {enrolledCourses.length === 0 ? (
               <p>No courses yet.</p>
             ) : enrolledCourses.map((course) => (
-              <Link key={course._id} to={`/courses/${course._id}`} className="course-card course-card-link">
-                <div className="course-thumbnail">
-                   {/* Placeholder for course image [cite: 170] */}
-                   📐 
-                </div>
-                <div className="course-info">
-                  <h3>{course.title}</h3>
-                  <p>{course.description}</p>
-                  
-                  {/* Progress Bar */}
-                  <div className="progress-container">
-                    <div 
-                      className="progress-bar" 
-                      style={{ width: `${course.progress}%` }}
-                    ></div>
+              <div key={course._id} style={{ position: 'relative' }}>
+                <Link to={`/courses/${course._id}`} className="course-card course-card-link">
+                  <div className="course-thumbnail">📐</div>
+                  <div className="course-info">
+                    <h3>{course.title}</h3>
+                    <p>{course.description}</p>
+                    <div className="progress-container">
+                      <div
+                        className="progress-bar"
+                        style={{ width: course.progress + '%' }}
+                      />
+                    </div>
+                    <span className="progress-text">{course.progress}%</span>
                   </div>
-                  <span className="progress-text">{course.progress}%</span>
-                </div>
-              </Link>
+                </Link>
+                <button
+                  onClick={(e) => handleDelete(e, course._id)}
+                  style={{
+                    position: 'absolute',
+                    top: '0.5rem',
+                    right: '0.5rem',
+                    background: '#e53e3e',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 4,
+                    padding: '0.25rem 0.5rem',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
             ))}
           </div>
 
-          {/* Daily Checklist Widget */}
           <div className="widget-column">
             <DailyChecklist />
           </div>
