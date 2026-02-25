@@ -77,6 +77,46 @@ export const returnUDB = async (req: Request, res: Response) => {
   }
 };
 
+export const listUsers = async (req: Request, res: Response) => {
+  try{
+    const users = await User.find({}, 'username email role createdAt');
+    res.json(users);
+  }catch{
+    res.status(500).json({message: 'Error fetching users'});
+  }
+};
+
+export const getUserById = async (req: Request, res: Response) => {
+  try{
+    const user = await User.findById(req.params.id).select('-passwordHash');
+    if (!user) return res.status(404).json({message: 'User not found'});
+    res.json(user);
+  }catch{
+    res.status(500).json({message: 'Server Error'});
+  }
+};
+
+export const updateUserById = async (req: Request, res: Response) => {
+  try{
+    const {name, bio} = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.params.id, {name, bio}, {new: true}
+    ).select('-passwordHash');
+    if (!user) return res.status(404).json({message: 'User not found'});
+    res.json(user);
+  }
+  catch{res.status(500).json({message: 'Server Error'});}
+};
+
+export const deleteUserById = async (req: Request, res: Response) => {
+  try{
+    const user = await User.findByIdAndDelete(req.params.id);
+    if(!user) return res.status(404).json({message: 'User not found'});
+    res.status(204).end();
+  }
+  catch{res.status(500).json({message: 'Server Error'});}
+};
+
 // Export the Multer middleware
 export const uploadProfilePicture = multer({ dest: 'uploads/' }).single('picture');
 
