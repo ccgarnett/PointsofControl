@@ -18,6 +18,10 @@ import {
   updateProfile,
   uploadPicture,
   uploadProfilePicture,
+  listUsers,
+  getUserById,
+  updateUserById,
+  deleteUserById,
 } from './src/config/userController';
 import {
   getMessages,
@@ -53,6 +57,10 @@ app.post('/api/users/register', registerUser);
 app.get('/api/users/profile', getProfile);
 app.put('/api/users/profile', updateProfile);
 app.post('/api/users/profile/picture', uploadProfilePicture, uploadPicture);
+app.get('/api/users', listUsers);
+app.get('/api/users/:id', getUserById);
+app.put('/api/users/:id', updateUserById);
+app.delete('/api/users/:id', deleteUserById);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
