@@ -5,7 +5,6 @@ import cors from 'cors';
 import connectDB from './src/config/db';
 import { getCourses, createCourse } from './src/config/courseController';
 import { registerUser, getProfile, updateProfile, uploadPicture, uploadProfilePicture } from './src/config/userController';
-
 connectDB();
 
 const app = express();
