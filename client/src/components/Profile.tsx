@@ -34,7 +34,8 @@ const Profile: React.FC = () => {
   const [form, setForm] = useState({ name: '', age: '', pronouns: '', bio: '' });
 
   const loadProfile = () => {
-    fetch('/api/users/profile')
+    const userId = localStorage.getItem('userId');
+    fetch(`/api/users/profile?userId=${userId}`)
       .then((res) => res.json())
       .then((data) => {
         setProfile(data);
@@ -60,7 +61,8 @@ const Profile: React.FC = () => {
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await fetch('/api/users/profile', {
+      const userId = localStorage.getItem('userId');
+      const res = await fetch(`/api/users/profile?userId=${userId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -107,9 +109,7 @@ const Profile: React.FC = () => {
   if (error && !profile) return <div className="dashboard-layout">Error: {error}</div>;
   if (!profile) return null;
 
-  const pictureUrl = profile.profilePictureUrl
-    ? (profile.profilePictureUrl.startsWith('http') ? profile.profilePictureUrl : profile.profilePictureUrl)
-    : null;
+  const pictureUrl = profile.profilePictureUrl ?? null;
 
   return (
     <div className="dashboard-layout">
@@ -225,11 +225,11 @@ const Profile: React.FC = () => {
 
         <div className="profile-section">
           <h3>Course Progress</h3>
-          {profile.enrolledCourses.length === 0 ? (
+          {(profile.enrolledCourses ?? []).length === 0 ? (
             <p>You are not enrolled in any courses yet.</p>
           ) : (
             <div className="courses-grid">
-              {profile.enrolledCourses.map((course) => (
+              {(profile.enrolledCourses ?? []).map((course) => (
                 <Link key={course._id} to={`/courses/${course._id}`} className="course-card course-card-link">
                   <div className="course-info">
                     <h3>{course.title}</h3>

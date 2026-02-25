@@ -26,18 +26,21 @@ describe('User Controller', () => {
   });
 
   it('should fetch profile with progress calculation (U5)', async () => {
-    const mockUser = { username: 'cc', enrolledCourses: ['c1'] };
-    const mockCourse = { _id: 'c1', title: 'Mindset', modules: [{ completed: true }, { completed: false }] };
-    
+    const mockCourse = { _id: 'c1', courseId: 'POC-101', title: 'Mindset', description: '', modules: [{ completed: true }, { completed: false }] };
+    const mockUser = {
+      username: 'cc',
+      enrolledCourses: [mockCourse],
+      toObject: jest.fn().mockReturnValue({ username: 'cc', enrolledCourses: [mockCourse] }),
+    };
+
     (User.findById as jest.Mock).mockReturnValue({
       populate: jest.fn().mockResolvedValue(mockUser)
     });
-    (Course.find as jest.Mock).mockResolvedValue([mockCourse]);
 
     const res = await request(app).get('/api/users/profile?userId=123');
     expect(res.status).toBe(200);
     // Verifies the progress calculation logic in userController.ts
-    expect(res.body.enrolledCourses[0].progress).toBe(50); 
+    expect(res.body.enrolledCourses[0].progress).toBe(50);
   });
   it('should create a new user', async () => {
     (User.findOne as jest.Mock).mockResolvedValue(null);
