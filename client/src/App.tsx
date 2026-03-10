@@ -8,6 +8,7 @@ import CourseDetail from './components/CourseDetail';
 import AdminMessages from './components/AdminMessages';
 import AdminUploadDocs from './components/AdminUploadDocs';
 import AdminAnalytics from './components/AdminAnalytics';
+import AccountSettings from './components/AccountSettings';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="/admin/docs" element={<AdminUploadDocs />} />
         <Route path="/admin/analytics" element={<AdminAnalytics />} />
         <Route path="/messages" element={<AdminMessages />} />
+        <Route path="/account-settings" element={<AccountSettings />} />
       </Routes>
     </BrowserRouter>
   );
