@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import Sidebar from './Sidebar';
 
 interface User {
     _id: string;
+    username?: string;
     name?: string;
     email?: string;
     role?: string;
@@ -62,20 +62,22 @@ const AdminUserManagement: React.FC = () => {
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>name</th>
-                        <th>email</th>
+                        <th>Name</th>
+                        <th>Email</th>
                         <th>Role</th>
-                        //<th>Created Date</th>
-                        //<th>Updated Date</th>
+                        {/* <th>Created Date</th> */}
+                        {/* <th>Updated Date</th> */}
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {users.map((userVal) => (
                         <tr key={userVal._id}>
-                            <td>{userVal.name ?? '-'}</td>
+                            <td>{userVal._id}</td>
+                            <td>{userVal.name ?? userVal.username ?? '-'}</td>
                             <td>{userVal.email ?? '-'}</td>
-                            <td>{userVal.role?? '-'}</td>
+                            <td>{userVal.role ?? '-'}</td>
+                            <td></td>
                         </tr>
                     ))}
                 </tbody>

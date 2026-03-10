@@ -44,6 +44,11 @@ const Sidebar: React.FC = () => {
           <div className="icon">📊</div>
           <span>Analytics</span>
         </Link>
+
+        <Link to="/account-settings" className="nav-item">
+          <div className="icon">⚙️</div>
+          <span>Account Settings</span>
+        </Link>
       </nav>
     </div>
   );

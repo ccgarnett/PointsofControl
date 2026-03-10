@@ -79,7 +79,7 @@ export const returnUDB = async (req: Request, res: Response) => {
 
 export const listUsers = async (req: Request, res: Response) => {
   try{
-    const users = await User.find({}, 'username email role createdAt');
+    const users = await User.find({}, 'username name email role createdAt');
     res.json(users);
   }catch{
     res.status(500).json({message: 'Error fetching users'});
