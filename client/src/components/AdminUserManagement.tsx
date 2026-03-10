@@ -4,9 +4,9 @@ import Sidebar from './Sidebar';
 
 interface User {
     _id: string;
-    name: string;
-    email: string;
-    role: 'admin' | 'user';
+    name?: string;
+    email?: string;
+    role?: string;
     createdAt?: string;
 }
 
@@ -14,8 +14,8 @@ const AdminUserManagement: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [status, setStatus] = useState<{type: 'success' | 'error'; text: string} | null>(null);
-    const [updatingId, setUpdatingId] = useState<string | null>(null);
+    //const [status, setStatus] = useState<{type: 'success' | 'error'; text: string} | null>(null);
+    //const [updatingId, setUpdatingId] = useState<string | null>(null);
 
     const fetchUsers = () => {
         setLoading(true);
@@ -26,8 +26,10 @@ const AdminUserManagement: React.FC = () => {
                 setUsers(data);
                 setError(null);
             }
-            else{setError('Unexpected response from server');}
-            setLoading(false);
+            else{
+                setError('Unexpected response from server');
+            }
+                setLoading(false);
         })
         .catch(() => {
             setError('Failed to load user database');
@@ -53,6 +55,33 @@ const AdminUserManagement: React.FC = () => {
           <h2>User Management</h2>
         </header>
 
+        {users.length === 0 ?(
+            <p>No users found in the database.</p>
+        ) : (
+            <table style={{width: '100%', borderCollapse: 'collapse', marginTop: '1rem'}}>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>name</th>
+                        <th>email</th>
+                        <th>Role</th>
+                        //<th>Created Date</th>
+                        //<th>Updated Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {users.map((userVal) => (
+                        <tr key={userVal._id}>
+                            <td>{userVal.name ?? '-'}</td>
+                            <td>{userVal.email ?? '-'}</td>
+                            <td>{userVal.role?? '-'}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        )
+        }
         </main>
         </div>
     );
