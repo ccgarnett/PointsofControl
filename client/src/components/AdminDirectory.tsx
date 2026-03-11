@@ -10,7 +10,7 @@ interface User {
     createdAt?: string;
 }
 
-const AdminUserManagement: React.FC = () => {
+const AdminDirectory: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -89,4 +89,4 @@ const AdminUserManagement: React.FC = () => {
     );
 };
 
-export default AdminUserManagement;
+export default AdminDirectory;
