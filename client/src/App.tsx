@@ -25,7 +25,7 @@ function App() {
         <Route path="/admin/analytics" element={<AdminAnalytics />} />
         <Route path="/messages" element={<AdminMessages />} />
         <Route path="/account-settings" element={<UserSettings />} />
-        <Route path="/admin/user-directory" element={<AdminDirectory/>}/>
+        <Route path="/admin/users" element={<AdminDirectory />} />
       </Routes>
     </BrowserRouter>
   );
