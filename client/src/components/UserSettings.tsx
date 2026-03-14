@@ -3,11 +3,48 @@ import Sidebar from './Sidebar';
 
 type Status = {type: 'success' | 'error' | 'info'; text: string} | null;
 
+const usePwdMatch = () => {
+  const [password, setPwd] = useState('');
+  const [confPwd, setConfPwd] = useState('');
+  const [isMatch, setIsMatch] = useState(true);
+
+  const handlePwdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setPwd(val);
+    setIsMatch(val === confPwd);
+  };
+
+  const handleConfPwdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setConfPwd(val);
+    setIsMatch(val === password);
+  };
+
+  return {
+    password,
+    confPwd,
+    isMatch,
+    handlePwdChange,
+    handleConfPwdChange,
+  };
+};
+
+
+
 const UserSettings: React.FC = () => {
     const [status, setStatus] = useState<Status>(null);
     const [busy, setBusy] = useState<'update' | 'delete' | null>(null);
+    /*const [form, setForm] = useState <settingsForm>({
+      name: '',
+      username: '',
+      email: '',
+      password: '',
+      passwordConfirm: '',
+    });*/
+    const [passwordMatch, setPWDmatch] = useState(true);
 
     const getUserId = () => localStorage.getItem('userId');
+
 
     const handleUpdateAccount = async () => {
         const userId = getUserId();
@@ -21,7 +58,7 @@ const UserSettings: React.FC = () => {
 
         try{
             const res = await fetch(`/api/users/profile?userId=${userId}`,{
-                method: 'PUT',
+                method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({}),
             });
@@ -85,10 +122,14 @@ const UserSettings: React.FC = () => {
           <h2>Account Settings</h2>
         </header>
         {status && (
-            <div className={`form-message ${status.type === 'info' ? 'info' : status.type}`}
-            style={{marginBottom: '1rem'}}>
-                {status.text}
-            </div>
+          <div
+            className={`form-message ${
+              status.type === 'info' ? 'info' : status.type
+            }`}
+            style={{ marginBottom: '1rem' }}
+          >
+            {status.text}
+          </div>
         )}
 
         <section className='profile-section'>
