@@ -1,7 +1,10 @@
 import { Request, Response } from 'express';
 import User from './User';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import multer from 'multer';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'poc_secret_key';
 
 /**
  * Creates a new user account and adds it to the database
@@ -32,40 +35,31 @@ export const registerUser = async (req: Request, res: Response) => {
 
 export const loginUser = async (req: Request, res: Response) => {
   try {
-    const { username, passwordHash } = req.body;
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ message: 'username and password are required' });
+    }
     const user = await User.findOne({ username });
-
     if (!user) {
-      return res.redirect('login.html?error=1');
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
-
-    const pwMatch = await bcrypt.compare(passwordHash, user.passwordHash);
+    const pwMatch = await bcrypt.compare(String(password), user.passwordHash);
     if (!pwMatch) {
-      return res.redirect('login.html?error=1');
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
-
-    (req as any).session = (req as any).session ?? {};
-    (req as any).session.user = { id: String(user._id), username: user.username };
-    res.redirect('index.html');
+    const token = jwt.sign(
+      { id: String(user._id), username: user.username, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    res.json({ token, user: { id: String(user._id), username: user.username, role: user.role } });
   } catch (error) {
-    res.status(500).send('Something went wrong. Please try again.');
+    res.status(500).json({ message: 'Server Error' });
   }
 };
 
-export const loggedUser = (req: Request, res: Response) => {
-  const sessionUser = (req as any).session?.user;
-  if (sessionUser) {
-    res.send(sessionUser);
-  } else {
-    res.json(null);
-  }
-};
-
-export const logoutUser = (req: Request, res: Response) => {
-  if ((req as any).session) {
-    (req as any).session.user = undefined;
-  }
-  res.redirect('index.html');
+export const logoutUser = (_req: Request, res: Response) => {
+  res.json({ message: 'Logged out' });
 };
 
 export const returnUDB = async (req: Request, res: Response) => {
@@ -97,15 +91,18 @@ export const getUserById = async (req: Request, res: Response) => {
 };
 
 export const updateUserById = async (req: Request, res: Response) => {
-  try{
-    const {name, bio} = req.body;
+  try {
+    const { name, bio, role } = req.body;
+    const update: Record<string, any> = { name, bio };
+    if (role === 'Admin' || role === 'User') update.role = role;
     const user = await User.findByIdAndUpdate(
-      req.params.id, {name, bio}, {new: true}
+      req.params.id, update, { new: true }
     ).select('-passwordHash');
-    if (!user) return res.status(404).json({message: 'User not found'});
+    if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user);
+  } catch {
+    res.status(500).json({ message: 'Server Error' });
   }
-  catch{res.status(500).json({message: 'Server Error'});}
 };
 
 export const deleteUserById = async (req: Request, res: Response) => {

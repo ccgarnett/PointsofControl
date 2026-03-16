@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import { useAuth } from '../context/AuthContext';
+import { SkeletonPage } from './Skeleton';
 
 interface CourseProgress {
   _id: string;
@@ -25,6 +27,7 @@ interface ProfileData {
 }
 
 const Profile: React.FC = () => {
+  const { user: authUser } = useAuth();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +37,7 @@ const Profile: React.FC = () => {
   const [form, setForm] = useState({ name: '', age: '', pronouns: '', bio: '' });
 
   const loadProfile = () => {
-    const userId = localStorage.getItem('userId');
+    const userId = authUser?.id;
     fetch(`/api/users/profile?userId=${userId}`)
       .then((res) => res.json())
       .then((data) => {
@@ -54,14 +57,19 @@ const Profile: React.FC = () => {
   };
 
   useEffect(() => {
+    document.title = 'Points of Control — Profile';
+  }, []);
+
+  useEffect(() => {
     loadProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
-      const userId = localStorage.getItem('userId');
+      const userId = authUser?.id;
       const res = await fetch(`/api/users/profile?userId=${userId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -105,7 +113,7 @@ const Profile: React.FC = () => {
     }
   };
 
-  if (loading) return <div className="dashboard-layout">Loading profile...</div>;
+  if (loading) return <SkeletonPage cards={3} />;
   if (error && !profile) return <div className="dashboard-layout">Error: {error}</div>;
   if (!profile) return null;
 

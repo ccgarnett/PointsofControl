@@ -1,7 +1,12 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './App.css';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
+import Login from './components/Login';
 import Dashboard from './components/Dashboard';
+import Courses from './components/Courses';
 import Profile from './components/Profile';
 import CreateCourse from './components/CreateCourse';
 import CourseDetail from './components/CourseDetail';
@@ -10,24 +15,29 @@ import AdminUploadDocs from './components/AdminUploadDocs';
 import AdminAnalytics from './components/AdminAnalytics';
 import UserSettings from './components/UserSettings';
 import AdminDirectory from './components/AdminDirectory';
+import About from './components/About';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/courses" element={<Dashboard />} />
-        <Route path="/courses/:id" element={<CourseDetail />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/admin/courses/create" element={<CreateCourse />} />
-        <Route path="/admin/docs" element={<AdminUploadDocs />} />
-        <Route path="/admin/analytics" element={<AdminAnalytics />} />
-        <Route path="/messages" element={<AdminMessages />} />
-        <Route path="/account-settings" element={<UserSettings />} />
-        <Route path="/admin/users" element={<AdminDirectory />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/courses" element={<Courses />} />
+          <Route path="/courses/:id" element={<CourseDetail />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/admin/courses/create" element={<AdminRoute><CreateCourse /></AdminRoute>} />
+          <Route path="/admin/docs" element={<AdminRoute><AdminUploadDocs /></AdminRoute>} />
+          <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
+          <Route path="/messages" element={<AdminMessages />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/account-settings" element={<ProtectedRoute><UserSettings /></ProtectedRoute>} />
+          <Route path="/admin/users" element={<AdminRoute><AdminDirectory /></AdminRoute>} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

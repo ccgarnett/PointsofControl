@@ -1,15 +1,98 @@
 .logo-section {
   margin-bottom: 24px;
+  display: flex;
+  justify-content: center;
 }
 
 .menu-icon {
   font-size: 1.5rem;
   cursor: pointer;
+  background: none;
+  border: none;
+  color: inherit;
+  line-height: 1;
 }
 
 .nav-links {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
+  width: 100%;
+}
+
+/* Expanded sidebar */
+.sidebar {
+  width: 180px;
+  transition: width 0.2s ease;
+  overflow: hidden;
+}
+
+.sidebar .nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 16px;
+  width: 100%;
+  white-space: nowrap;
+}
+
+.sidebar .nav-item span {
+  opacity: 1;
+  transition: opacity 0.15s ease;
+}
+
+/* Collapsed sidebar — icons only */
+.sidebar.collapsed {
+  width: 80px;
+}
+
+.sidebar.collapsed .nav-links {
+  align-items: center;
+}
+
+.sidebar.collapsed .nav-item {
+  justify-content: center;
+  padding: 6px 0;
+}
+
+.sidebar.collapsed .nav-item span {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Bottom section */
+.sidebar-bottom {
+  margin-top: auto;
+  padding-bottom: 1rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.sidebar.collapsed .sidebar-bottom {
+  align-items: center;
+}
+
+.logout-btn,
+.login-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  padding: 0;
+  text-align: left;
+}
+
+.logout-btn:hover .icon,
+.logout-btn:hover span {
+  color: #ef4444;
+}
+
+.login-btn:hover .icon,
+.login-btn:hover span {
+  color: #22c55e;
 }

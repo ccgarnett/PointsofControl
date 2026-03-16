@@ -25,7 +25,7 @@ const DailyChecklist: React.FC = () => {
               checked={task.completed} 
               onChange={() => toggleTask(task.id)}
             />
-            <span style={{ textDecoration: task.completed ? 'line-through' : 'none' }}>
+            <span className={task.completed ? 'done' : ''}>
               {task.text}
             </span>
           </div>
