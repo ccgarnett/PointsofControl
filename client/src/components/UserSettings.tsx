@@ -1,31 +1,32 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 
-type Status = {type: 'success' | 'error' | 'info'; text: string} | null;
+type Status = { type: 'success' | 'error' | 'info'; text: string } | null;
 
-const usePwdMatch = () => {
-  const [password, setPwd] = useState('');
-  const [confPwd, setConfPwd] = useState('');
+// Tutorial-style password match helper (kept simple on purpose).
+const usePasswordMatch = () => {
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isMatch, setIsMatch] = useState(true);
 
-  const handlePwdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setPwd(val);
-    setIsMatch(val === confPwd);
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPassword(value);
+    setIsMatch(value === confirmPassword);
   };
 
-  const handleConfPwdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setConfPwd(val);
-    setIsMatch(val === password);
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setConfirmPassword(value);
+    setIsMatch(value === password);
   };
 
   return {
     password,
-    confPwd,
+    confirmPassword,
     isMatch,
-    handlePwdChange,
-    handleConfPwdChange,
+    handlePasswordChange,
+    handleConfirmPasswordChange,
   };
 };
 
@@ -34,16 +35,74 @@ const usePwdMatch = () => {
 const UserSettings: React.FC = () => {
     const [status, setStatus] = useState<Status>(null);
     const [busy, setBusy] = useState<'update' | 'delete' | null>(null);
-    /*const [form, setForm] = useState <settingsForm>({
-      name: '',
-      username: '',
-      email: '',
-      password: '',
-      passwordConfirm: '',
-    });*/
-    const [passwordMatch, setPWDmatch] = useState(true);
+    const [name, setName] = useState('');
+    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
+    const [saving, setSaving] = useState(false);
+    
+
+    const {
+      password,
+      confirmPassword,
+      isMatch,
+      handlePasswordChange,
+      handleConfirmPasswordChange,
+    } = usePasswordMatch();
 
     const getUserId = () => localStorage.getItem('userId');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+
+      if(!isMatch){
+        setStatus({type: 'error', text: 'Passwords do not match.'});
+        return;
+      }
+
+      const userId = getUserId();
+      if(!userId){
+        setStatus({
+          type: 'info',
+          text: 'No account found.',
+        });
+        return;
+      }
+
+      setSaving(true);
+      setStatus(null);
+
+      try{
+        const body = {
+          name: name.trim() || undefined,
+          username: username.trim() || undefined,
+          email: email.trim() || undefined,
+          password: password || undefined,
+        };
+
+        const res = await fetch (`/api/users/profile?userId=${userId}`,{
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(body),
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if(!res.ok){
+          throw new Error(data.message || 'Failed to save settings.');
+        }
+
+        setStatus ({type: 'success', text: 'Settings saved successfully.'});
+      }
+      catch (err){
+        setStatus({
+          type: 'error',
+          text: (err as Error).message || 'Could not save settings.',
+        });
+      }
+      finally{
+        setSaving(false);
+      }
+    };
 
 
     const handleUpdateAccount = async () => {
@@ -124,17 +183,85 @@ const UserSettings: React.FC = () => {
         {status && (
           <div
             className={`form-message ${
-              status.type === 'info' ? 'info' : status.type
-            }`}
+              status.type === 'info' ? 'info' : status.type}`}
             style={{ marginBottom: '1rem' }}
           >
             {status.text}
           </div>
         )}
 
-        <section className='profile-section'>
-            <h3>Account Actions</h3>
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <section className="profile-section">
+          <h3>User Settings</h3>
+
+          <form onSubmit={handleSubmit} style={{ maxWidth: 480, marginBottom: '2rem' }}>
+            <div className="form-group">
+              <label htmlFor="name">Name</label>
+              <input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your name"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="username">Username</label>
+              <input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Username"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="email">Email</label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="password">New Password</label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={handlePasswordChange}
+                placeholder="New password"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="confirmPassword">Confirm Password</label>
+              <input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={handleConfirmPasswordChange}
+                placeholder="Confirm password"
+              />
+            </div>
+
+            {!isMatch && (
+              <p style={{ color: 'red', fontSize: '0.9rem' }}>
+                Passwords do not match
+              </p>
+            )}
+
+            <button type="submit" className="btn-submit" disabled={saving}>
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+          </form>
+
+          <h3>Account Actions</h3>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             <button
               type="button"
               className="btn-submit"

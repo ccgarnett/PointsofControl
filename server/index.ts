@@ -56,6 +56,7 @@ app.delete('/api/messages/:id', deleteMessage);
 app.post('/api/users/register', registerUser);
 app.get('/api/users/profile', getProfile);
 app.put('/api/users/profile', updateProfile);
+app.post('/api/users/profile', updateProfile);
 app.post('/api/users/profile/picture', uploadProfilePicture, uploadPicture);
 app.get('/api/users', listUsers);
 app.get('/api/users/:id', getUserById);
