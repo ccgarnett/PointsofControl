@@ -14,6 +14,8 @@ import {
 } from './src/config/courseController';
 import {
   registerUser,
+  loginUser,
+  logoutUser,
   getProfile,
   updateProfile,
   uploadPicture,
@@ -54,6 +56,8 @@ app.delete('/api/messages/:id', deleteMessage);
 
 // ── Users ────────────────────────────────────────────────────────────────────
 app.post('/api/users/register', registerUser);
+app.post('/api/users/login', loginUser);
+app.post('/api/users/logout', logoutUser);
 app.get('/api/users/profile', getProfile);
 app.put('/api/users/profile', updateProfile);
 app.post('/api/users/profile/picture', uploadProfilePicture, uploadPicture);

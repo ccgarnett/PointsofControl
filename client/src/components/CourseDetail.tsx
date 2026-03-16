@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import { SkeletonPage } from './Skeleton';
 
 interface Module {
   title: string;
@@ -41,6 +42,10 @@ const CourseDetail: React.FC = () => {
       .catch(() => setLoading(false));
   }, [id]);
 
+  useEffect(() => {
+    document.title = course ? `Points of Control — ${course.title}` : 'Points of Control';
+  }, [course]);
+
   const handleToggleComplete = async (moduleIndex: number) => {
     if (!course) return;
     setToggling(moduleIndex);
@@ -59,7 +64,7 @@ const CourseDetail: React.FC = () => {
     }
   };
 
-  if (loading) return <div className="dashboard-layout">Loading...</div>;
+  if (loading) return <SkeletonPage cards={2} />;
   if (!course) return <div className="dashboard-layout">Course not found.</div>;
 
   const videos = course.videoEmbedLinks || [];
@@ -92,7 +97,7 @@ const CourseDetail: React.FC = () => {
         )}
 
         {modules.length > 0 && (
-          <div style={{ marginBottom: '1.5rem' }}>
+          <div className="course-progress-bar-wrap">
             <p style={{ marginBottom: '0.25rem' }}>
               {completedCount} / {modules.length} lessons complete
             </p>
@@ -123,44 +128,14 @@ const CourseDetail: React.FC = () => {
           <section className="course-modules-section">
             <h3>Modules</h3>
             {modules.map((mod, i) => (
-              <div
-                key={i}
-                className="module-block"
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '1rem',
-                  padding: '1rem',
-                  marginBottom: '0.75rem',
-                  background: mod.completed ? '#f0fff4' : '#fafafa',
-                  borderRadius: 8,
-                  border: mod.completed ? '1px solid #68d391' : '1px solid #e2e8f0',
-                }}
-              >
-                <div style={{ flex: 1 }}>
-                  <h4 style={{ margin: '0 0 0.5rem 0', textDecoration: mod.completed ? 'line-through' : 'none' }}>
+              <div key={i} className={`module-block${mod.completed ? ' completed' : ''}`}>
+                <div className="module-block-body">
+                  <h4 className={`module-block-title${mod.completed ? ' done' : ''}`}>
                     {i + 1}. {mod.title}
                   </h4>
                   {mod.contentUrl && (
                     isDocument(mod.contentUrl) ? (
-                      <a
-                        href={mod.contentUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.4rem',
-                          padding: '0.4rem 0.8rem',
-                          background: '#ebf8ff',
-                          color: '#2b6cb0',
-                          borderRadius: 4,
-                          border: '1px solid #bee3f8',
-                          textDecoration: 'none',
-                          fontWeight: 500,
-                          fontSize: '0.9rem',
-                        }}
-                      >
+                      <a href={mod.contentUrl} target="_blank" rel="noreferrer" className="module-doc-link">
                         📄 View Document
                       </a>
                     ) : (
@@ -175,20 +150,7 @@ const CourseDetail: React.FC = () => {
                     )
                   )}
                 </div>
-                <button
-                  onClick={() => handleToggleComplete(i)}
-                  disabled={toggling === i}
-                  style={{
-                    padding: '0.4rem 0.8rem',
-                    borderRadius: 6,
-                    border: 'none',
-                    cursor: 'pointer',
-                    background: mod.completed ? '#68d391' : '#e2e8f0',
-                    color: mod.completed ? '#22543d' : '#4a5568',
-                    fontWeight: 600,
-                    whiteSpace: 'nowrap',
-                  }}
-                >
+                <button onClick={() => handleToggleComplete(i)} disabled={toggling === i} className={`module-toggle-btn${mod.completed ? ' done' : ''}`}>
                   {getButtonLabel(i, mod.completed)}
                 </button>
               </div>
