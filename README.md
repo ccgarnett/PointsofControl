@@ -17,5 +17,8 @@ Go to client/
 
 ## Test Coverage
 <!--Backend-->
+<img width="852" height="304" alt="image" src="https://github.com/user-attachments/assets/fa53a775-d299-4fe9-8561-7de7f0210cc0" />
+
+<!--FrontEnd-->
 To run tests and display coverage, use the following command on terminal: ```npm run test:coverage```.
 <!-- <img width="774" height="368" alt="image" src="https://github.com/user-attachments/assets/f6e6559c-8abd-47c4-bed4-4df25823e70c" /> -->
