@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Sidebar from './Sidebar';
+import { SkeletonPage } from './Skeleton';
 import { Chart, BarController, BarElement, CategoryScale, LinearScale, Legend, Tooltip } from 'chart.js';
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Legend, Tooltip);
@@ -19,6 +20,10 @@ const AdminAnalytics: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
+
+  useEffect(() => {
+    document.title = 'Points of Control — Analytics';
+  }, []);
 
   useEffect(() => {
     fetch('/api/analytics/courses')
@@ -71,8 +76,13 @@ const AdminAnalytics: React.FC = () => {
     };
   }, [analytics]);
 
-  if (loading) return <div className="dashboard-layout">Loading...</div>;
-  if (error) return <div className="dashboard-layout">Error: {error}</div>;
+  if (loading) return <SkeletonPage cards={2} />;
+  if (error) return (
+    <div className="dashboard-layout">
+      <Sidebar />
+      <main className="main-content"><p>Error: {error}</p></main>
+    </div>
+  );
 
   return (
     <div className="dashboard-layout">
@@ -84,31 +94,35 @@ const AdminAnalytics: React.FC = () => {
         </header>
 
         {analytics.length === 0 ? (
-          <p>No course data yet.</p>
+          <div className="empty-state">
+            <div className="empty-state-icon">📊</div>
+            <h3>No course data yet</h3>
+            <p>Analytics will appear here once courses have activity.</p>
+          </div>
         ) : (
           <>
-            <div style={{ maxWidth: 700, margin: '2rem 0' }}>
+            <div className="analytics-chart-wrap">
               <canvas ref={chartRef} />
             </div>
 
-            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem' }}>
+            <table className="data-table">
               <thead>
-                <tr style={{ borderBottom: '2px solid #ddd', textAlign: 'left' }}>
-                  <th style={{ padding: '0.5rem' }}>Course</th>
-                  <th style={{ padding: '0.5rem' }}>ID</th>
-                  <th style={{ padding: '0.5rem' }}>Completed</th>
-                  <th style={{ padding: '0.5rem' }}>Total</th>
-                  <th style={{ padding: '0.5rem' }}>Rate</th>
+                <tr>
+                  <th>Course</th>
+                  <th>ID</th>
+                  <th>Completed</th>
+                  <th>Total</th>
+                  <th>Rate</th>
                 </tr>
               </thead>
               <tbody>
                 {analytics.map((a) => (
-                  <tr key={a._id} style={{ borderBottom: '1px solid #eee' }}>
-                    <td style={{ padding: '0.5rem' }}>{a.title}</td>
-                    <td style={{ padding: '0.5rem', color: '#666' }}>{a.courseId}</td>
-                    <td style={{ padding: '0.5rem' }}>{a.completedModules}</td>
-                    <td style={{ padding: '0.5rem' }}>{a.totalModules}</td>
-                    <td style={{ padding: '0.5rem', fontWeight: 600, color: a.completionRate === 100 ? '#38a169' : '#4a90e2' }}>
+                  <tr key={a._id}>
+                    <td>{a.title}</td>
+                    <td className="muted">{a.courseId}</td>
+                    <td>{a.completedModules}</td>
+                    <td>{a.totalModules}</td>
+                    <td style={{ color: a.completionRate === 100 ? '#22c55e' : 'var(--accent)', fontWeight: 600 }}>
                       {a.completionRate}%
                     </td>
                   </tr>

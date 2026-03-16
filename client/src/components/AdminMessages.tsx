@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Sidebar from './Sidebar';
+import { useAuth } from '../context/AuthContext';
 
 interface Message {
   _id: string;
@@ -9,12 +10,18 @@ interface Message {
 }
 
 const AdminMessages: React.FC = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'Admin';
   const [messages, setMessages] = useState<Message[]>([]);
   const [newContent, setNewContent] = useState('');
   const [editId, setEditId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const [status, setStatus] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const POSTED_BY = 'Jordan'; // replace with auth context in Iteration 3
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  useEffect(() => {
+    document.title = 'Points of Control — Messages';
+  }, []);
 
   const fetchMessages = () => {
     fetch('/api/messages')
@@ -32,7 +39,7 @@ const AdminMessages: React.FC = () => {
       const res = await fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: newContent, postedBy: POSTED_BY }),
+        body: JSON.stringify({ content: newContent, postedBy: user?.username ?? 'Admin' }),
       });
       if (!res.ok) throw new Error('Failed to post');
       setNewContent('');
@@ -62,7 +69,6 @@ const AdminMessages: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this message?')) return;
     try {
       const res = await fetch(`/api/messages/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete');
@@ -88,22 +94,30 @@ const AdminMessages: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={handlePost} style={{ marginBottom: '2rem' }}>
-          <div className="form-group">
-            <label>New Message</label>
-            <textarea
-              value={newContent}
-              onChange={(e) => setNewContent(e.target.value)}
-              placeholder="Write a message to your clients..."
-              rows={3}
-              style={{ width: '100%' }}
-            />
-          </div>
-          <button type="submit" className="btn-submit">Post Message</button>
-        </form>
+        {isAdmin && (
+          <form onSubmit={handlePost} style={{ marginBottom: '2rem' }}>
+            <div className="form-group">
+              <label>New Message</label>
+              <textarea
+                value={newContent}
+                onChange={(e) => setNewContent(e.target.value)}
+                placeholder="Write a message to your clients..."
+                rows={3}
+                style={{ width: '100%' }}
+              />
+            </div>
+            <button type="submit" className="btn-submit">Post Message</button>
+          </form>
+        )}
 
         <div>
-          {messages.length === 0 && <p>No messages yet.</p>}
+          {messages.length === 0 && (
+            <div className="empty-state">
+              <div className="empty-state-icon">✈️</div>
+              <h3>No messages yet</h3>
+              <p>Messages posted here will appear on the dashboard.</p>
+            </div>
+          )}
           {messages.map((msg) => (
             <div key={msg._id} className="module-block" style={{ marginBottom: '1rem' }}>
               {editId === msg._id ? (
@@ -125,12 +139,22 @@ const AdminMessages: React.FC = () => {
                   <small style={{ color: '#888' }}>
                     Posted by {msg.postedBy} · {new Date(msg.createdAt).toLocaleDateString()}
                   </small>
-                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                    <button className="btn-add" onClick={() => { setEditId(msg._id); setEditContent(msg.content); }}>
-                      Edit
-                    </button>
-                    <button className="btn-remove" onClick={() => handleDelete(msg._id)}>Delete</button>
-                  </div>
+                  {isAdmin && (
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                      <button className="btn-add" onClick={() => { setEditId(msg._id); setEditContent(msg.content); }}>
+                        Edit
+                      </button>
+                      {confirmDeleteId === msg._id ? (
+                        <div className="inline-confirm">
+                          <span>Delete?</span>
+                          <button className="btn-confirm-yes" onClick={() => { handleDelete(msg._id); setConfirmDeleteId(null); }}>Yes</button>
+                          <button className="btn-confirm-no" onClick={() => setConfirmDeleteId(null)}>No</button>
+                        </div>
+                      ) : (
+                        <button className="btn-remove" onClick={() => setConfirmDeleteId(msg._id)}>Delete</button>
+                      )}
+                    </div>
+                  )}
                 </>
               )}
             </div>
