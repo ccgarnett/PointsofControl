@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import { useAuth } from '../context/AuthContext';
 
 type Status = { type: 'success' | 'error' | 'info'; text: string } | null;
 
@@ -33,6 +35,12 @@ const usePasswordMatch = () => {
 
 
 const UserSettings: React.FC = () => {
+    const { user: authUser, logout } = useAuth();
+
+    useEffect(() => {
+        document.title = 'Points of Control — Account Settings';
+    }, []);
+    const navigate = useNavigate();
     const [status, setStatus] = useState<Status>(null);
     const [busy, setBusy] = useState<'update' | 'delete' | null>(null);
     const [name, setName] = useState('');
@@ -49,7 +57,7 @@ const UserSettings: React.FC = () => {
       handleConfirmPasswordChange,
     } = usePasswordMatch();
 
-    const getUserId = () => localStorage.getItem('userId');
+    const getUserId = () => authUser?.id ?? null;
 
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -156,10 +164,8 @@ const UserSettings: React.FC = () => {
                 throw new Error(data.message || 'Failed to delete account.');
             }
 
-            setStatus ({
-                type: 'success',
-                text: 'Accoutn deletion completed.'
-            });
+            logout();
+            navigate('/login');
         }
         catch (err){
             setStatus({
@@ -167,8 +173,9 @@ const UserSettings: React.FC = () => {
                 text: (err as Error).message || 'Could not delete account.',
             });
         }
-        finally {}
-        setBusy(null);
+        finally {
+            setBusy(null);
+        }
     };
 
 

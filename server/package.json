@@ -6,6 +6,7 @@
   "scripts": {
     "start": "ts-node index.ts",
     "dev": "nodemon -e ts -x \"ts-node index.ts\"",
+    "seed": "ts-node src/config/seedAdmins.ts",
     "test": "jest",
     "test:coverage": "jest --coverage"
   },
