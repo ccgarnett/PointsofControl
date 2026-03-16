@@ -143,8 +143,19 @@ export const getProfile = async (req: Request, res: Response) => {
 export const updateProfile = async (req: Request, res: Response) => {
   try {
     const userId = req.query.userId as string;
-    const { name, age, pronouns, bio } = req.body;
-    const user = await User.findByIdAndUpdate(userId, { name, age, pronouns, bio }, { new: true });
+    const { name, username, email, password, age, pronouns, bio } = req.body;
+
+    if (username) {
+      const existing = await User.findOne({ username, _id: { $ne: userId } });
+      if (existing) return res.status(400).json({ message: 'Username already exists' });
+    }
+
+    const update: Record<string, any> = { name, username, email, age, pronouns, bio };
+    if (password) {
+      update.passwordHash = await bcrypt.hash(String(password), 10);
+    }
+
+    const user = await User.findByIdAndUpdate(userId, update, { new: true });
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user);
   } catch (error) {
