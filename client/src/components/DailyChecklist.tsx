@@ -1,19 +1,12 @@
 import React, { useState } from 'react';
 
-const DailyChecklist: React.FC = () => {
+/*const DailyChecklist: React.FC = () => {
   // Static framework as requested. Later, this can fetch from the DB.
-  const [tasks, setTasks] = useState([
-    { id: 1, text: "Watch Module 1 Video", completed: false },
-    { id: 2, text: "Read 'Story of Jordan'", completed: true },
-    { id: 3, text: "Complete Quiz 1", completed: false }
-  ]);
+  const [tasks, setTasks] = useState();
 
-  const toggleTask = (id: number) => {
-    setTasks(tasks.map(task => 
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ));
-  };
+  const toggleTask = (id: number) => {};
 
+  
   return (
     <div className="checklist-container">
       <h3>Daily Checklist</h3>
@@ -32,7 +25,8 @@ const DailyChecklist: React.FC = () => {
         ))}
       </div>
     </div>
+    
   );
-};
+};*/
 
-export default DailyChecklist;
+//export default DailyChecklist;
