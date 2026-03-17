@@ -1,6 +1,6 @@
 import mongoose, {Schema, Document, Types} from 'mongoose';
 
-interface ITask extends Document{
+export interface ITask extends Document{
     user_id: Types.ObjectId;
     dateKey: string;
     description: string;
