@@ -632,6 +632,67 @@
   background-color: rgba(99, 102, 241, 0.08);
 }
 
+.module-block.post-unread {
+  border-left: 3px solid var(--accent);
+  background-color: rgba(99, 102, 241, 0.05);
+}
+
+.reaction-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.reaction-btn {
+  background: var(--bg-main);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: var(--text-body);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.reaction-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.reaction-btn.active {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: var(--accent);
+  color: var(--text-heading);
+}
+
+.reaction-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.acknowledge-btn {
+  background: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 3px 12px;
+  font-size: 0.8rem;
+  color: var(--text-body);
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.acknowledge-btn:hover {
+  border-color: #22c55e;
+  color: #22c55e;
+}
+
+.acknowledged-label {
+  font-size: 0.8rem;
+  color: #22c55e;
+  margin-left: auto;
+}
+
 .module-block-body {
   flex: 1;
 }
@@ -905,6 +966,35 @@ select:focus {
   margin: 2rem 0;
 }
 
+.analytics-summary-row {
+  display: flex;
+  gap: 1rem;
+  margin: 1rem 0 1.5rem;
+  flex-wrap: wrap;
+}
+
+.analytics-summary-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 1.25rem 1.75rem;
+  min-width: 140px;
+  text-align: center;
+}
+
+.analytics-summary-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.analytics-summary-label {
+  font-size: 0.8rem;
+  color: var(--text-body);
+  opacity: 0.7;
+  margin-top: 4px;
+}
+
 /* ── About Page ───────────────────────────────────────────────────────────── */
 .about-wrapper {
   max-width: 720px;
@@ -1013,6 +1103,21 @@ select:focus {
   text-align: left;
 }
 
+.auth-switch {
+  margin-top: 1.25rem;
+  font-size: 0.875rem;
+  color: var(--text-body);
+}
+
+.auth-switch a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.auth-switch a:hover {
+  text-decoration: underline;
+}
+
 /* ── Sidebar logout button ────────────────────────────────────────────────── */
 .sidebar-bottom {
   margin-top: auto;
@@ -1030,4 +1135,44 @@ select:focus {
 .logout-btn:hover .icon,
 .logout-btn:hover span {
   color: #ef4444;
+}
+
+/* ── Enroll CTA (A11) ───────────────────────────────────────────────────── */
+.enroll-cta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.enroll-price {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.btn-enroll {
+  padding: 0.55rem 1.4rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.btn-enroll:hover {
+  opacity: 0.85;
+}
+
+.enroll-success {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #22c55e;
 }

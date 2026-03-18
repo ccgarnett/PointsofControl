@@ -11,7 +11,9 @@ import {
   uploadDoc,
   toggleModuleComplete,
   getCourseAnalytics,
+  getPurchaseAnalytics,
 } from './src/config/courseController';
+import { requireAuth, requireAdmin } from './src/config/authMiddleware';
 import {
   registerUser,
   loginUser,
@@ -30,7 +32,10 @@ import {
   createMessage,
   updateMessage,
   deleteMessage,
+  reactToMessage,
+  acknowledgeMessage,
 } from './src/config/messageController';
+import { logClick, getClickAnalytics } from './src/config/clickController';
 connectDB();
 
 const app = express();
@@ -47,12 +52,21 @@ app.delete('/api/courses/:id', deleteCourse);
 app.post('/api/courses/:id/docs', uploadDocMiddleware, uploadDoc);
 app.patch('/api/courses/:courseId/modules/:moduleIndex/complete', toggleModuleComplete);
 app.get('/api/analytics/courses', getCourseAnalytics);
+app.get('/api/admin/analytics/purchases', requireAuth, requireAdmin, getPurchaseAnalytics);
+app.post('/api/analytics/click', logClick);
+app.get('/api/admin/analytics/clicks', requireAuth, requireAdmin, getClickAnalytics);
 
 // ── Messages ─────────────────────────────────────────────────────────────────
 app.get('/api/messages', getMessages);
 app.post('/api/messages', createMessage);
+app.post('/api/messages/:id/react', requireAuth, reactToMessage);
+app.post('/api/messages/:id/acknowledge', requireAuth, acknowledgeMessage);
 app.put('/api/messages/:id', updateMessage);
 app.delete('/api/messages/:id', deleteMessage);
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+app.post('/api/auth/login', loginUser);
+app.post('/api/auth/logout', logoutUser);
 
 // ── Users ────────────────────────────────────────────────────────────────────
 app.post('/api/users/register', registerUser);
