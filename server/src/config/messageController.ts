@@ -1,8 +1,11 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import Message from './Message';
+import { AuthRequest } from './authMiddleware';
+
+const VALID_REACTION_TYPES = ['👍', '❤️', '👏'];
 
 // GET /api/messages — all messages, newest first
-export const getMessages = async (req: Request, res: Response) => {
+export const getMessages = async (req: AuthRequest, res: Response) => {
   try {
     const messages = await Message.find().sort({ createdAt: -1 });
     res.json(messages);
@@ -12,7 +15,7 @@ export const getMessages = async (req: Request, res: Response) => {
 };
 
 // POST /api/messages — create a new message
-export const createMessage = async (req: Request, res: Response) => {
+export const createMessage = async (req: AuthRequest, res: Response) => {
   try {
     const { content, postedBy } = req.body;
     if (!content || !postedBy) {
@@ -26,7 +29,7 @@ export const createMessage = async (req: Request, res: Response) => {
 };
 
 // PUT /api/messages/:id — edit message content
-export const updateMessage = async (req: Request, res: Response) => {
+export const updateMessage = async (req: AuthRequest, res: Response) => {
   try {
     const { content } = req.body;
     if (!content) {
@@ -45,11 +48,54 @@ export const updateMessage = async (req: Request, res: Response) => {
 };
 
 // DELETE /api/messages/:id — delete a message
-export const deleteMessage = async (req: Request, res: Response) => {
+export const deleteMessage = async (req: AuthRequest, res: Response) => {
   try {
     const message = await Message.findByIdAndDelete(req.params.id);
     if (!message) return res.status(404).json({ message: 'Message not found' });
     res.json({ message: 'Message deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// POST /api/messages/:id/react — toggle a reaction (U13)
+export const reactToMessage = async (req: AuthRequest, res: Response) => {
+  try {
+    const { type } = req.body;
+    if (!VALID_REACTION_TYPES.includes(type)) {
+      return res.status(400).json({ message: 'Invalid reaction type' });
+    }
+    const userId = req.user!.id;
+    const msg = await Message.findById(req.params.id);
+    if (!msg) return res.status(404).json({ message: 'Message not found' });
+
+    const existingIdx = msg.reactions.findIndex(
+      (r) => r.userId === userId && r.type === type
+    );
+    if (existingIdx !== -1) {
+      msg.reactions.splice(existingIdx, 1);
+    } else {
+      msg.reactions.push({ userId, type });
+    }
+    await msg.save();
+    res.json(msg);
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// POST /api/messages/:id/acknowledge — mark as read (U13)
+export const acknowledgeMessage = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const msg = await Message.findById(req.params.id);
+    if (!msg) return res.status(404).json({ message: 'Message not found' });
+
+    if (!msg.acknowledgedBy.includes(userId)) {
+      msg.acknowledgedBy.push(userId);
+      await msg.save();
+    }
+    res.json(msg);
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });
   }
