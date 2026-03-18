@@ -1,9 +1,15 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+export interface IReaction {
+  userId: string;
+  type: string;
+}
+
 export interface IMessage extends Document {
   content: string;
   postedBy: string;
-  reactions: string[];
+  reactions: IReaction[];
+  acknowledgedBy: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -12,7 +18,13 @@ const MessageSchema: Schema = new Schema(
   {
     content: { type: String, required: true, trim: true },
     postedBy: { type: String, required: true, trim: true },
-    reactions: [{ type: String }],
+    reactions: [
+      {
+        userId: { type: String, required: true },
+        type: { type: String, required: true },
+      },
+    ],
+    acknowledgedBy: [{ type: String }],
   },
   { timestamps: true }
 );
