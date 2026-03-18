@@ -9,7 +9,7 @@ const localDateConversion = () => {
     const localDate = new Date();
     const year = localDate.getFullYear();
     const month = String(localDate.getMonth()+1).padStart(2,'0');
-    const day = String(localDate.getDay()).padStart(2,'0');
+    const day = String(localDate.getDate()).padStart(2,'0');
     return `${year}-${month}-${day}`;
 };
 
@@ -70,7 +70,7 @@ export const readTask = async (req: Request, res: Response) => {
 export const updateTask = async (req: Request, res: Response) => {
     try{
         const user_id = String(req.query.user_id || '');
-        const task_id = String(req.params.task_id || '');
+        const task_id = String(req.params.task_id || req.params.id || '');
         if(!user_id || !isValidObjectId(user_id)){
             return res.status(400).json({message:'Invalid user id.'});
         }
@@ -116,6 +116,9 @@ export const deleteTask = async (req: Request, res: Response) => {
         if(!task_id || !isValidObjectId(task_id)){
             return res.status(400).json({message:'Task does not exist.'});
         }
+        const deleted = await Task.findOneAndDelete({ _id: task_id, user_id });
+        if(!deleted) return res.status(404).json({message:'task not found.'});
+        res.json({ message: 'task deleted' });
     }catch(error){res.status(500).json({message:'Server Error'})};
 };
 

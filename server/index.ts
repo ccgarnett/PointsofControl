@@ -32,6 +32,15 @@ import {
   deleteMessage,
 } from './src/config/messageController';
 connectDB();
+import {
+  makeArchived,
+  createTask,
+  readTask,
+  updateTask,
+  deleteTask,
+  readArchive,
+} from './src/config/taskController';
+connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -66,6 +75,13 @@ app.get('/api/users', listUsers);
 app.get('/api/users/:id', getUserById);
 app.put('/api/users/:id', updateUserById);
 app.delete('/api/users/:id', deleteUserById);
+
+// ── Checklist ──────────────────────────────────────────────────────────────────── 
+app.get('/api/checklist', readTask);
+app.get('api/checklist/archive', readArchive);
+app.post('api/checklist', createTask);
+app.patch('api/checklist/:id', updateTask);
+app.delete('api/checklist/:id', deleteTask);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
