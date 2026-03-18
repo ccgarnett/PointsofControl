@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Sidebar from './Sidebar';
 import { SkeletonPage } from './Skeleton';
+import { useAuth } from '../context/AuthContext';
 import { Chart, BarController, BarElement, CategoryScale, LinearScale, Legend, Tooltip } from 'chart.js';
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Legend, Tooltip);
@@ -14,10 +15,39 @@ interface CourseAnalytic {
   completionRate: number;
 }
 
+interface PurchaseAnalytic {
+  _id: string;
+  courseId: string;
+  title: string;
+  price: number;
+  purchaseCount: number;
+  totalRevenue: number;
+}
+
+interface ClickAnalytic {
+  _id: string;
+  courseId: string;
+  title: string;
+  enrollClicks: number;
+  pageviews: number;
+  conversionRate: number;
+}
+
 const AdminAnalytics: React.FC = () => {
+  const { token } = useAuth();
+
   const [analytics, setAnalytics] = useState<CourseAnalytic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [purchases, setPurchases] = useState<PurchaseAnalytic[]>([]);
+  const [purchaseLoading, setPurchaseLoading] = useState(true);
+  const [purchaseError, setPurchaseError] = useState<string | null>(null);
+
+  const [clicks, setClicks] = useState<ClickAnalytic[]>([]);
+  const [clickLoading, setClickLoading] = useState(true);
+  const [clickError, setClickError] = useState<string | null>(null);
+
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
 
@@ -41,6 +71,46 @@ const AdminAnalytics: React.FC = () => {
         setLoading(false);
       });
   }, []);
+
+  useEffect(() => {
+    if (!token) return;
+    fetch('/api/admin/analytics/purchases', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setPurchases(data);
+        } else {
+          setPurchaseError('Unexpected response from server');
+        }
+        setPurchaseLoading(false);
+      })
+      .catch(() => {
+        setPurchaseError('Failed to load purchase analytics');
+        setPurchaseLoading(false);
+      });
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    fetch('/api/admin/analytics/clicks', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setClicks(data);
+        } else {
+          setClickError('Unexpected response from server');
+        }
+        setClickLoading(false);
+      })
+      .catch(() => {
+        setClickError('Failed to load click analytics');
+        setClickLoading(false);
+      });
+  }, [token]);
 
   useEffect(() => {
     if (!analytics.length || !chartRef.current) return;
@@ -83,6 +153,9 @@ const AdminAnalytics: React.FC = () => {
       <main className="main-content"><p>Error: {error}</p></main>
     </div>
   );
+
+  const totalEnrollments = purchases.reduce((s, p) => s + p.purchaseCount, 0);
+  const totalRevenue = purchases.reduce((s, p) => s + p.totalRevenue, 0);
 
   return (
     <div className="dashboard-layout">
@@ -129,6 +202,110 @@ const AdminAnalytics: React.FC = () => {
                 ))}
               </tbody>
             </table>
+          </>
+        )}
+
+        {/* ── Purchase Analytics ──────────────────────────────────────────── */}
+        <div className="section-heading-row" style={{ marginTop: '2.5rem' }}>
+          <h3 className="section-heading">Purchase Analytics</h3>
+        </div>
+
+        {purchaseLoading ? (
+          <p className="muted">Loading purchase data…</p>
+        ) : purchaseError ? (
+          <p style={{ color: '#ef4444' }}>{purchaseError}</p>
+        ) : (
+          <>
+            <div className="analytics-summary-row">
+              <div className="analytics-summary-card">
+                <div className="analytics-summary-value">{purchases.length}</div>
+                <div className="analytics-summary-label">Courses</div>
+              </div>
+              <div className="analytics-summary-card">
+                <div className="analytics-summary-value">{totalEnrollments}</div>
+                <div className="analytics-summary-label">Total Enrollments</div>
+              </div>
+              <div className="analytics-summary-card">
+                <div className="analytics-summary-value">${totalRevenue.toLocaleString()}</div>
+                <div className="analytics-summary-label">Total Revenue</div>
+              </div>
+            </div>
+
+            {purchases.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-state-icon">💳</div>
+                <h3>No purchases yet</h3>
+                <p>Enrollment data will appear here once users sign up for courses.</p>
+              </div>
+            ) : (
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Course</th>
+                    <th>ID</th>
+                    <th>Price</th>
+                    <th>Enrollments</th>
+                    <th>Revenue</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {purchases.map((p) => (
+                    <tr key={p._id}>
+                      <td>{p.title}</td>
+                      <td className="muted">{p.courseId}</td>
+                      <td>${p.price.toLocaleString()}</td>
+                      <td>{p.purchaseCount}</td>
+                      <td style={{ color: '#22c55e', fontWeight: 600 }}>
+                        ${p.totalRevenue.toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </>
+        )}
+        {/* ── Click / Conversion Analytics ──────────────────────────────── */}
+        <div className="section-heading-row" style={{ marginTop: '2.5rem' }}>
+          <h3 className="section-heading">Enroll Click Analytics</h3>
+        </div>
+
+        {clickLoading ? (
+          <p className="muted">Loading click data…</p>
+        ) : clickError ? (
+          <p style={{ color: '#ef4444' }}>{clickError}</p>
+        ) : (
+          <>
+            {clicks.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-state-icon">🖱️</div>
+                <h3>No click data yet</h3>
+                <p>Click and pageview events will appear here once users visit course pages.</p>
+              </div>
+            ) : (
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Course</th>
+                    <th>Page Views</th>
+                    <th>Enroll Clicks</th>
+                    <th>Conversion Rate</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {clicks.map((c) => (
+                    <tr key={c._id}>
+                      <td>{c.title}</td>
+                      <td>{c.pageviews}</td>
+                      <td>{c.enrollClicks}</td>
+                      <td style={{ color: c.conversionRate >= 10 ? '#22c55e' : 'var(--accent)', fontWeight: 600 }}>
+                        {c.conversionRate}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </>
         )}
       </main>
