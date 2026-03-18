@@ -18,3 +18,6 @@ coverage/
 # Uploads
 server/uploads/*
 !server/uploads/.gitkeep
+
+# Claude Code
+.claude/
