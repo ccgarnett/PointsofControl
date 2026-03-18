@@ -12,7 +12,7 @@ const Sidebar: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate('/dashboard');
   };
 
   return (
@@ -79,15 +79,24 @@ const Sidebar: React.FC = () => {
 
       <div className="sidebar-bottom">
         {user ? (
-          <button className="nav-item logout-btn" onClick={handleLogout}>
-            <div className="icon">🚪</div>
-            <span>Logout</span>
-          </button>
+          <>
+            <div className="sidebar-username">{user.username}</div>
+            <button className="nav-item logout-btn" onClick={handleLogout}>
+              <div className="icon">🚪</div>
+              <span>Logout</span>
+            </button>
+          </>
         ) : (
-          <Link to="/login" className="nav-item login-btn">
-            <div className="icon">🔑</div>
-            <span>Login</span>
-          </Link>
+          <>
+            <Link to="/login" className="nav-item login-btn">
+              <div className="icon">🔑</div>
+              <span>Login</span>
+            </Link>
+            <Link to="/register" className="nav-item login-btn">
+              <div className="icon">📝</div>
+              <span>Register</span>
+            </Link>
+          </>
         )}
       </div>
     </div>

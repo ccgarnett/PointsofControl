@@ -35,35 +35,38 @@ describe('Sidebar', () => {
     expect(screen.queryByText('Create Course')).not.toBeInTheDocument();
   });
 
-  it('shows Login button when not authenticated', () => {
+  it('shows Login and Register links when not authenticated', () => {
     mockUseAuth.mockReturnValue(makeAuth(null));
     render(<MemoryRouter><Sidebar /></MemoryRouter>);
     expect(screen.getByText('Login')).toBeInTheDocument();
+    expect(screen.getByText('Register')).toBeInTheDocument();
     expect(screen.queryByText('Logout')).not.toBeInTheDocument();
   });
 
-  it('shows Logout button when authenticated', () => {
+  it('shows Logout button and username when authenticated', () => {
     mockUseAuth.mockReturnValue(makeAuth('abc', 'Admin'));
     render(<MemoryRouter><Sidebar /></MemoryRouter>);
     expect(screen.getByText('Logout')).toBeInTheDocument();
+    expect(screen.getByText('chase')).toBeInTheDocument();
     expect(screen.queryByText('Login')).not.toBeInTheDocument();
+    expect(screen.queryByText('Register')).not.toBeInTheDocument();
   });
 
-  it('calls logout and navigates to /login when Logout is clicked', async () => {
+  it('calls logout and navigates to /dashboard when Logout is clicked', async () => {
     const mockLogout = jest.fn();
     mockUseAuth.mockReturnValue({ token: 'abc', user: { id: '1', username: 'chase', role: 'Admin' }, login: jest.fn(), logout: mockLogout } as any);
     render(
-      <MemoryRouter initialEntries={['/dashboard']}>
+      <MemoryRouter initialEntries={['/profile']}>
         <Routes>
-          <Route path="/dashboard" element={<Sidebar />} />
-          <Route path="/login" element={<div>Login Page</div>} />
+          <Route path="/profile" element={<Sidebar />} />
+          <Route path="/dashboard" element={<div>Dashboard Page</div>} />
         </Routes>
       </MemoryRouter>
     );
     await userEvent.click(screen.getByText('Logout'));
     expect(mockLogout).toHaveBeenCalled();
     await waitFor(() => {
-      expect(screen.getByText('Login Page')).toBeInTheDocument();
+      expect(screen.getByText('Dashboard Page')).toBeInTheDocument();
     });
   });
 

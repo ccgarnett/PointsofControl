@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import Login from './components/Login';
+import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import Courses from './components/Courses';
 import Profile from './components/Profile';
@@ -23,6 +24,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/" element={<Dashboard />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/courses" element={<Courses />} />
