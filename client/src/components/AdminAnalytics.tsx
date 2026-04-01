@@ -33,6 +33,23 @@ interface ClickAnalytic {
   conversionRate: number;
 }
 
+interface InteractionAnalytic {
+  courseId: string;
+  courseTitle: string;
+  pageViews: number;
+  enrollClicks: number;
+  purchases: number;
+  totalInteractions: number;
+}
+
+const PERIODS = [
+  { label: 'Today', value: 'day' },
+  { label: 'This Week', value: 'week' },
+  { label: 'This Month', value: 'month' },
+  { label: 'This Year', value: 'year' },
+  { label: 'All Time', value: 'all' },
+];
+
 const AdminAnalytics: React.FC = () => {
   const { token } = useAuth();
 
@@ -47,6 +64,11 @@ const AdminAnalytics: React.FC = () => {
   const [clicks, setClicks] = useState<ClickAnalytic[]>([]);
   const [clickLoading, setClickLoading] = useState(true);
   const [clickError, setClickError] = useState<string | null>(null);
+
+  const [interactions, setInteractions] = useState<InteractionAnalytic[]>([]);
+  const [interactionLoading, setInteractionLoading] = useState(true);
+  const [interactionError, setInteractionError] = useState<string | null>(null);
+  const [interactionPeriod, setInteractionPeriod] = useState<string>('all');
 
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
@@ -91,6 +113,28 @@ const AdminAnalytics: React.FC = () => {
         setPurchaseLoading(false);
       });
   }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    setInteractionLoading(true);
+    const query = interactionPeriod !== 'all' ? `?period=${interactionPeriod}` : '';
+    fetch(`/api/admin/analytics/courses${query}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setInteractions(data);
+        } else {
+          setInteractionError('Unexpected response from server');
+        }
+        setInteractionLoading(false);
+      })
+      .catch(() => {
+        setInteractionError('Failed to load interaction analytics');
+        setInteractionLoading(false);
+      });
+  }, [token, interactionPeriod]);
 
   useEffect(() => {
     if (!token) return;
@@ -307,6 +351,61 @@ const AdminAnalytics: React.FC = () => {
               </table>
             )}
           </>
+        )}
+        {/* ── Course Interactions Analytics (A12 / A13) ──────────────────── */}
+        <div className="section-heading-row" style={{ marginTop: '2.5rem' }}>
+          <h3 className="section-heading">Course Interactions</h3>
+        </div>
+
+        <div className="interaction-filter-row">
+          {PERIODS.map((p) => (
+            <button
+              key={p.value}
+              className={`interaction-filter-btn${interactionPeriod === p.value ? ' active' : ''}`}
+              onClick={() => setInteractionPeriod(p.value)}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+
+        {interactionLoading ? (
+          <p className="muted">Loading interaction data…</p>
+        ) : interactionError ? (
+          <p style={{ color: '#ef4444' }}>{interactionError}</p>
+        ) : interactions.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-state-icon">📈</div>
+            <h3>No interaction data yet</h3>
+            <p>Data will appear once courses have page views, enroll clicks, or purchases.</p>
+          </div>
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Course</th>
+                <th>Page Views</th>
+                <th>Enroll Clicks</th>
+                <th>Purchases</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {interactions.map((item, idx) => (
+                <tr key={item.courseId}>
+                  <td className="muted">{idx + 1}</td>
+                  <td>{item.courseTitle}</td>
+                  <td>{item.pageViews}</td>
+                  <td>{item.enrollClicks}</td>
+                  <td>{item.purchases}</td>
+                  <td style={{ color: 'var(--accent)', fontWeight: 600 }}>
+                    {item.totalInteractions}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </main>
     </div>
