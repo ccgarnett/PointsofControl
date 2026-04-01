@@ -13,6 +13,8 @@ export interface IUser {
   passwordHash: string;
   role: UserRole;
   enrolledCourses: Types.ObjectId[];
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,6 +35,8 @@ const userSchemaFields: Record<keyof Omit<IUser, 'createdAt' | 'updatedAt'>, any
   passwordHash: { type: String, required: true },
   role: { type: String, enum: ['Admin', 'User'], default: 'User' },
   enrolledCourses: [{ type: Schema.Types.ObjectId, ref: 'Course' }],
+  resetPasswordToken: { type: String, required: false },
+  resetPasswordExpires: { type: Date, required: false },
 };
 
 // Schema and model both use the plain IUser interface — Mongoose v6+ pattern.

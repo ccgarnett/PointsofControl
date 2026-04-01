@@ -29,15 +29,18 @@ const mockClickData = [
   { _id: 'c1', courseId: 'POC-101', title: 'Mindset', pageviews: 10, enrollClicks: 3, conversionRate: 30 },
 ];
 
-// Helper: sets up all three sequential fetches AdminAnalytics makes
+// Helper: sets up all four sequential fetches AdminAnalytics makes
+// Order: completion, purchases, interactions (courses), clicks
 const setupFetch = (
   completion = mockCompletionData,
   purchases = mockPurchaseData,
   clicks = mockClickData,
+  interactions: any[] = [],
 ) => {
   global.fetch = jest.fn()
     .mockResolvedValueOnce({ ok: true, json: jest.fn().mockResolvedValue(completion) })
     .mockResolvedValueOnce({ ok: true, json: jest.fn().mockResolvedValue(purchases) })
+    .mockResolvedValueOnce({ ok: true, json: jest.fn().mockResolvedValue(interactions) })
     .mockResolvedValueOnce({ ok: true, json: jest.fn().mockResolvedValue(clicks) }) as jest.Mock;
 };
 
@@ -95,6 +98,7 @@ describe('AdminAnalytics — Purchase section', () => {
     global.fetch = jest.fn()
       .mockResolvedValueOnce({ ok: true, json: jest.fn().mockResolvedValue(mockCompletionData) })
       .mockRejectedValueOnce(new Error('network error'))
+      .mockResolvedValueOnce({ ok: true, json: jest.fn().mockResolvedValue([]) })
       .mockResolvedValueOnce({ ok: true, json: jest.fn().mockResolvedValue(mockClickData) }) as jest.Mock;
 
     render(<MemoryRouter><AdminAnalytics /></MemoryRouter>);
@@ -145,6 +149,7 @@ describe('AdminAnalytics — Enroll Click section', () => {
     global.fetch = jest.fn()
       .mockResolvedValueOnce({ ok: true, json: jest.fn().mockResolvedValue(mockCompletionData) })
       .mockResolvedValueOnce({ ok: true, json: jest.fn().mockResolvedValue(mockPurchaseData) })
+      .mockResolvedValueOnce({ ok: true, json: jest.fn().mockResolvedValue([]) })
       .mockRejectedValueOnce(new Error('network error')) as jest.Mock;
 
     render(<MemoryRouter><AdminAnalytics /></MemoryRouter>);
