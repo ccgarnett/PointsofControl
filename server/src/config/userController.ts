@@ -39,7 +39,7 @@ export const loginUser = async (req: Request, res: Response) => {
     if (!username || !password) {
       return res.status(400).json({ message: 'username and password are required' });
     }
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ $or: [{ username }, { email: username }] });
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -48,10 +48,10 @@ export const loginUser = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    //for reactivating a deactivated account
-    if(!user.is_active){
-        user.is_active = true;
-        await user.save();
+    // Reactivate only when explicitly deactivated (undefined / missing counts as active)
+    if (user.is_active === false) {
+      user.is_active = true;
+      await user.save();
     }
     
 

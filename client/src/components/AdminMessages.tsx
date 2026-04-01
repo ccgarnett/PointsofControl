@@ -2,15 +2,24 @@ import React, { useEffect, useState } from 'react';
 import Sidebar from './Sidebar';
 import { useAuth } from '../context/AuthContext';
 
+interface Reaction {
+  userId: string;
+  type: string;
+}
+
 interface Message {
   _id: string;
   content: string;
   postedBy: string;
+  reactions: Reaction[];
+  acknowledgedBy: string[];
   createdAt: string;
 }
 
+const REACTION_TYPES = ['👍', '❤️', '👏'] as const;
+
 const AdminMessages: React.FC = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const isAdmin = user?.role === 'Admin';
   const [messages, setMessages] = useState<Message[]>([]);
   const [newContent, setNewContent] = useState('');
@@ -79,6 +88,42 @@ const AdminMessages: React.FC = () => {
     }
   };
 
+  const handleReact = async (msgId: string, type: string) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`/api/messages/${msgId}/react`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ type }),
+      });
+      if (!res.ok) return;
+      const updated: Message = await res.json();
+      setMessages((prev) => prev.map((m) => (m._id === msgId ? updated : m)));
+    } catch { /* silent */ }
+  };
+
+  const handleAcknowledge = async (msgId: string) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`/api/messages/${msgId}/acknowledge`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const updated: Message = await res.json();
+      setMessages((prev) => prev.map((m) => (m._id === msgId ? updated : m)));
+    } catch { /* silent */ }
+  };
+
+  const countReactions = (msg: Message, type: string) =>
+    msg.reactions.filter((r) => r.type === type).length;
+
+  const hasReacted = (msg: Message, type: string) =>
+    !!user && msg.reactions.some((r) => r.userId === user.id && r.type === type);
+
+  const hasAcknowledged = (msg: Message) =>
+    !!user && msg.acknowledgedBy.includes(user.id);
+
   return (
     <div className="dashboard-layout">
       <Sidebar />
@@ -119,7 +164,11 @@ const AdminMessages: React.FC = () => {
             </div>
           )}
           {messages.map((msg) => (
-            <div key={msg._id} className="module-block" style={{ marginBottom: '1rem' }}>
+            <div
+              key={msg._id}
+              className={`module-block${user && !hasAcknowledged(msg) ? ' post-unread' : ''}`}
+              style={{ marginBottom: '1rem' }}
+            >
               {editId === msg._id ? (
                 <>
                   <textarea
@@ -139,6 +188,31 @@ const AdminMessages: React.FC = () => {
                   <small style={{ color: '#888' }}>
                     Posted by {msg.postedBy} · {new Date(msg.createdAt).toLocaleDateString()}
                   </small>
+
+                  <div className="reaction-bar">
+                    {REACTION_TYPES.map((type) => (
+                      <button
+                        key={type}
+                        className={`reaction-btn${hasReacted(msg, type) ? ' active' : ''}`}
+                        onClick={() => handleReact(msg._id, type)}
+                        disabled={!user}
+                        title={user ? `React with ${type}` : 'Sign in to react'}
+                      >
+                        {type}{countReactions(msg, type) > 0 && <span> {countReactions(msg, type)}</span>}
+                      </button>
+                    ))}
+
+                    {user && !isAdmin && (
+                      hasAcknowledged(msg) ? (
+                        <span className="acknowledged-label">✓ Acknowledged</span>
+                      ) : (
+                        <button className="acknowledge-btn" onClick={() => handleAcknowledge(msg._id)}>
+                          Acknowledge
+                        </button>
+                      )
+                    )}
+                  </div>
+
                   {isAdmin && (
                     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                       <button className="btn-add" onClick={() => { setEditId(msg._id); setEditContent(msg.content); }}>

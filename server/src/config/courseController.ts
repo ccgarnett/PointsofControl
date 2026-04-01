@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import multer from 'multer';
 import path from 'path';
 import Course from './Course';
+import User from './User';
 
 // ─── A3: Multer config for document uploads ───────────────────────────────────
 const docStorage = multer.diskStorage({
@@ -152,6 +153,40 @@ export const toggleModuleComplete = async (req: Request, res: Response) => {
     await course.save();
 
     res.json({ completed: course.modules[index].completed, course });
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// ─── GET /api/admin/analytics/purchases — Purchase analytics (A1) ────────────
+export const getPurchaseAnalytics = async (_req: Request, res: Response) => {
+  try {
+    const courses = await Course.find({}, '_id courseId title price');
+    const users = await User.find({}, 'enrolledCourses');
+
+    const countMap: Record<string, number> = {};
+    for (const user of users) {
+      for (const courseId of user.enrolledCourses) {
+        const key = String(courseId);
+        countMap[key] = (countMap[key] || 0) + 1;
+      }
+    }
+
+    const result = courses
+      .map((c) => {
+        const purchaseCount = countMap[String(c._id)] || 0;
+        return {
+          _id: c._id,
+          courseId: c.courseId,
+          title: c.title,
+          price: c.price,
+          purchaseCount,
+          totalRevenue: purchaseCount * c.price,
+        };
+      })
+      .sort((a, b) => b.purchaseCount - a.purchaseCount);
+
+    res.json(result);
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });
   }

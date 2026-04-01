@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { SkeletonPage } from './Skeleton';
+import { useAuth } from '../context/AuthContext';
 
 interface Module {
   title: string;
@@ -27,9 +28,11 @@ const isDocument = (url: string) => {
 const CourseDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [course, setCourse] = useState<CourseData | null>(null);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState<number | null>(null);
+  const [enrollClicked, setEnrollClicked] = useState(false);
 
   useEffect(() => {
     fetch('/api/courses')
@@ -38,9 +41,27 @@ const CourseDetail: React.FC = () => {
         const c = data.find((x) => x._id === id);
         setCourse(c || null);
         setLoading(false);
+
+        if (c) {
+          fetch('/api/analytics/click', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ courseId: c._id, userId: null, eventType: 'pageview' }),
+          }).catch(() => {});
+        }
       })
       .catch(() => setLoading(false));
   }, [id]);
+
+  const handleEnroll = async () => {
+    if (!course) return;
+    await fetch('/api/analytics/click', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ courseId: course._id, userId: user?.id ?? null, eventType: 'enroll_click' }),
+    }).catch(() => {});
+    setEnrollClicked(true);
+  };
 
   useEffect(() => {
     document.title = course ? `Points of Control — ${course.title}` : 'Points of Control';
@@ -94,6 +115,20 @@ const CourseDetail: React.FC = () => {
 
         {course.description && (
           <p className="course-description">{course.description}</p>
+        )}
+
+        {/* ── Enroll CTA ───────────────────────────────────────────────────── */}
+        {user?.role !== 'Admin' && (
+          <div className="enroll-cta">
+            <span className="enroll-price">${course.price.toLocaleString()}</span>
+            {enrollClicked ? (
+              <span className="enroll-success">✓ Enrollment request received!</span>
+            ) : (
+              <button className="btn-enroll" onClick={handleEnroll}>
+                Enroll Now
+              </button>
+            )}
+          </div>
         )}
 
         {modules.length > 0 && (

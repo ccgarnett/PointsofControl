@@ -12,7 +12,9 @@ import {
   uploadDoc,
   toggleModuleComplete,
   getCourseAnalytics,
+  getPurchaseAnalytics,
 } from './src/config/courseController';
+import { requireAuth, requireAdmin } from './src/config/authMiddleware';
 import {
   registerUser,
   loginUser,
@@ -31,15 +33,20 @@ import {
   createMessage,
   updateMessage,
   deleteMessage,
+  reactToMessage,
+  acknowledgeMessage,
 } from './src/config/messageController';
-connectDB();
+import { logClick, getClickAnalytics } from './src/config/clickController';
+import { forgotPassword, resetPassword } from './src/config/authController';
+import { getCourseInteractionAnalytics } from './src/config/courseInteractionController';
+import { getCalendarTasks } from './src/config/calendarController';
 import {
   createTask,
   readTask,
   updateTask,
   deleteTask,
 } from './src/config/taskController';
-import { requireAuth } from './src/config/authMiddleware';
+
 connectDB();
 
 const app = express();
@@ -57,12 +64,24 @@ app.delete('/api/courses/:id', deleteCourse);
 app.post('/api/courses/:id/docs', uploadDocMiddleware, uploadDoc);
 app.patch('/api/courses/:courseId/modules/:moduleIndex/complete', toggleModuleComplete);
 app.get('/api/analytics/courses', getCourseAnalytics);
+app.get('/api/admin/analytics/purchases', requireAuth, requireAdmin, getPurchaseAnalytics);
+app.post('/api/analytics/click', logClick);
+app.get('/api/admin/analytics/clicks', requireAuth, requireAdmin, getClickAnalytics);
+app.get('/api/admin/analytics/courses', requireAuth, requireAdmin, getCourseInteractionAnalytics);
 
 // ── Messages ─────────────────────────────────────────────────────────────────
 app.get('/api/messages', getMessages);
 app.post('/api/messages', createMessage);
+app.post('/api/messages/:id/react', requireAuth, reactToMessage);
+app.post('/api/messages/:id/acknowledge', requireAuth, acknowledgeMessage);
 app.put('/api/messages/:id', updateMessage);
 app.delete('/api/messages/:id', deleteMessage);
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+app.post('/api/auth/login', loginUser);
+app.post('/api/auth/logout', logoutUser);
+app.post('/api/auth/forgot-password', forgotPassword);
+app.post('/api/auth/reset-password/:token', resetPassword);
 
 // ── Users ────────────────────────────────────────────────────────────────────
 app.post('/api/users/register', registerUser);
@@ -77,11 +96,14 @@ app.get('/api/users/:id', getUserById);
 app.put('/api/users/:id', updateUserById);
 app.delete('/api/users/:id', deleteUserById);
 
-// ── Checklist ──────────────────────────────────────────────────────────────────── 
+// ── Checklist ────────────────────────────────────────────────────────────────
 app.get('/api/checklist', requireAuth, readTask);
 app.post('/api/checklist', requireAuth, createTask);
 app.patch('/api/checklist/:id', requireAuth, updateTask);
 app.delete('/api/checklist/:id', requireAuth, deleteTask);
+
+// ── Calendar ──────────────────────────────────────────────────────────────────
+app.get('/api/calendar/tasks', requireAuth, getCalendarTasks);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

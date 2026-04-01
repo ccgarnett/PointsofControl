@@ -15,10 +15,15 @@ beforeEach(() => {
 });
 
 describe('Login component', () => {
-  it('renders a username field, password field, and submit button', () => {
+  it('renders username-or-email label, password field, and submit button', () => {
     render(<MemoryRouter><Login /></MemoryRouter>);
-    expect(screen.getByRole('textbox')).toBeInTheDocument();
+    expect(screen.getByText(/username or email/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
+  });
+
+  it('shows a Register link', () => {
+    render(<MemoryRouter><Login /></MemoryRouter>);
+    expect(screen.getByRole('link', { name: /register/i })).toBeInTheDocument();
   });
 
   it('calls login() and navigates to /dashboard on successful submit', async () => {

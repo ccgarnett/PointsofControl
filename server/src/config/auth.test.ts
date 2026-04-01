@@ -28,6 +28,25 @@ describe('Auth — loginUser', () => {
     expect(res.body.message).toMatch(/invalid credentials/i);
   });
 
+  it('returns token when logging in with email instead of username', async () => {
+    const mockUser = { _id: 'uid1', username: 'chase', passwordHash: 'hashed', role: 'Admin' };
+    (User.findOne as jest.Mock).mockResolvedValue(mockUser);
+    (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+    (jwt.sign as jest.Mock).mockReturnValue('mock.jwt.token');
+
+    const res = await request(app).post('/api/users/login').send({ username: 'chase@poc.com', password: 'Chase@POC1' });
+    expect(res.status).toBe(200);
+    expect(res.body.token).toBe('mock.jwt.token');
+    expect(res.body.user.username).toBe('chase');
+  });
+
+  it('returns 401 when email is not found', async () => {
+    (User.findOne as jest.Mock).mockResolvedValue(null);
+    const res = await request(app).post('/api/users/login').send({ username: 'unknown@poc.com', password: 'pass' });
+    expect(res.status).toBe(401);
+    expect(res.body.message).toMatch(/invalid credentials/i);
+  });
+
   it('returns 401 when password does not match', async () => {
     (User.findOne as jest.Mock).mockResolvedValue({ username: 'chase', passwordHash: 'hashed', role: 'Admin' });
     (bcrypt.compare as jest.Mock).mockResolvedValue(false);

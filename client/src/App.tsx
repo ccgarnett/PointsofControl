@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import Login from './components/Login';
+import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import Courses from './components/Courses';
 import Profile from './components/Profile';
@@ -16,6 +17,9 @@ import AdminAnalytics from './components/AdminAnalytics';
 import UserSettings from './components/UserSettings';
 import AdminDirectory from './components/AdminDirectory';
 import About from './components/About';
+import ForgotPassword from './components/ForgotPassword';
+import ResetPassword from './components/ResetPassword';
+import Calendar from './components/Calendar';
 
 function App() {
   return (
@@ -23,6 +27,9 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/" element={<Dashboard />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/courses" element={<Courses />} />
@@ -33,6 +40,7 @@ function App() {
           <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
           <Route path="/messages" element={<AdminMessages />} />
           <Route path="/about" element={<About />} />
+          <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
           <Route path="/account-settings" element={<ProtectedRoute><UserSettings /></ProtectedRoute>} />
           <Route path="/admin/users" element={<AdminRoute><AdminDirectory /></AdminRoute>} />
         </Routes>

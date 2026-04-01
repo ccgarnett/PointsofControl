@@ -14,11 +14,28 @@ interface EnrolledCourse {
   moduleCount: number;
 }
 
+interface Reaction {
+  userId: string;
+  type: string;
+}
+
+interface Post {
+  _id: string;
+  content: string;
+  postedBy: string;
+  reactions: Reaction[];
+  acknowledgedBy: string[];
+  createdAt: string;
+}
+
+const REACTION_TYPES = ['👍', '❤️', '👏'] as const;
+
 const Dashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
     document.title = 'Points of Control — Home';
@@ -38,6 +55,49 @@ const Dashboard: React.FC = () => {
         setLoading(false);
       });
   }, [user]);
+
+  useEffect(() => {
+    fetch('/api/messages')
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setPosts(data.slice(0, 3)); })
+      .catch(() => { /* non-critical, stay silent */ });
+  }, []);
+
+  const handleReact = async (postId: string, type: string) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`/api/messages/${postId}/react`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ type }),
+      });
+      if (!res.ok) return;
+      const updated: Post = await res.json();
+      setPosts((prev) => prev.map((p) => (p._id === postId ? updated : p)));
+    } catch { /* silent */ }
+  };
+
+  const handleAcknowledge = async (postId: string) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`/api/messages/${postId}/acknowledge`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const updated: Post = await res.json();
+      setPosts((prev) => prev.map((p) => (p._id === postId ? updated : p)));
+    } catch { /* silent */ }
+  };
+
+  const countReactions = (post: Post, type: string) =>
+    post.reactions.filter((r) => r.type === type).length;
+
+  const hasReacted = (post: Post, type: string) =>
+    !!user && post.reactions.some((r) => r.userId === user.id && r.type === type);
+
+  const hasAcknowledged = (post: Post) =>
+    !!user && post.acknowledgedBy.includes(user.id);
 
   if (loading) return <SkeletonPage cards={3} />;
 
@@ -92,6 +152,50 @@ const Dashboard: React.FC = () => {
                   </Link>
                 ))}
               </div>
+            )}
+
+            {/* ── Recent Posts ─────────────────────────────────────────────── */}
+            {posts.length > 0 && (
+              <>
+                <div className="section-heading-row" style={{ marginTop: '2rem' }}>
+                  <h3 className="section-heading">Recent Posts</h3>
+                  <Link to="/messages" style={{ fontSize: '0.8rem', color: 'var(--accent)' }}>See all</Link>
+                </div>
+                {posts.map((post) => (
+                  <div
+                    key={post._id}
+                    className={`module-block${user && !hasAcknowledged(post) ? ' post-unread' : ''}`}
+                    style={{ marginBottom: '0.75rem' }}
+                  >
+                    <p style={{ marginBottom: '0.25rem' }}>{post.content}</p>
+                    <small style={{ color: '#888' }}>
+                      Posted by {post.postedBy} · {new Date(post.createdAt).toLocaleDateString()}
+                    </small>
+                    <div className="reaction-bar">
+                      {REACTION_TYPES.map((type) => (
+                        <button
+                          key={type}
+                          className={`reaction-btn${hasReacted(post, type) ? ' active' : ''}`}
+                          onClick={() => handleReact(post._id, type)}
+                          disabled={!user}
+                          title={user ? `React with ${type}` : 'Sign in to react'}
+                        >
+                          {type}{countReactions(post, type) > 0 && <span> {countReactions(post, type)}</span>}
+                        </button>
+                      ))}
+                      {user && user.role !== 'Admin' && (
+                        hasAcknowledged(post) ? (
+                          <span className="acknowledged-label">✓ Acknowledged</span>
+                        ) : (
+                          <button className="acknowledge-btn" onClick={() => handleAcknowledge(post._id)}>
+                            Acknowledge
+                          </button>
+                        )
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </>
             )}
           </div>
 

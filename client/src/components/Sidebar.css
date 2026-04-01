@@ -96,3 +96,18 @@
 .login-btn:hover span {
   color: #22c55e;
 }
+
+.sidebar-username {
+  font-size: 0.75rem;
+  color: var(--text-body);
+  opacity: 0.6;
+  padding: 0 16px 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.sidebar.collapsed .sidebar-username {
+  display: none;
+}

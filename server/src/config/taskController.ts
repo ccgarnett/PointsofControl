@@ -126,7 +126,6 @@ export const deleteTask = async (req: AuthRequest, res: Response) => {
 export const readArchive = async (req: AuthRequest, res: Response) => {
     try{
         const user_id = String(req.user?.id || '');
-        const dateKey = String(req.query.date || localDateConversion());
         if(!user_id || !isValidObjectId(user_id)){
             return res.status(401).json({message:'Unauthorized'});
         }

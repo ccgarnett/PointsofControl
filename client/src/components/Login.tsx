@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Login: React.FC = () => {
@@ -43,7 +43,7 @@ const Login: React.FC = () => {
         {error && <div className="form-message error">{error}</div>}
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
-            <label>Username</label>
+            <label>Username or Email</label>
             <input
               type="text"
               value={username}
@@ -61,10 +61,16 @@ const Login: React.FC = () => {
               required
             />
           </div>
+          <div className="forgot-password-link">
+            <Link to="/forgot-password">Forgot Password?</Link>
+          </div>
           <button type="submit" className="btn-submit" disabled={loading}>
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
+        <p className="auth-switch">
+          Don't have an account? <Link to="/register">Register</Link>
+        </p>
       </div>
     </div>
   );
