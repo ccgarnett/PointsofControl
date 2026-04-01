@@ -17,7 +17,8 @@ Go to client/
 
 ## Test Coverage
 <!--Backend-->
-<img width="780" height="241" alt="image" src="https://github.com/user-attachments/assets/792f20fd-130a-4aac-a3c8-7e6ebd862b98" />
+<img width="910" height="423" alt="image" src="https://github.com/user-attachments/assets/6725132a-ca8a-48b0-9b64-72581f358d36" />
+
 
 
 <!--FrontEnd-->
