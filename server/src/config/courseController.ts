@@ -77,6 +77,44 @@ export const deleteCourse = async (req: Request, res: Response) => {
   }
 };
 
+// ─── PUT /api/courses/:id — Update course (partial body OK) ─────────────────
+export const updateCourse = async (req: Request, res: Response) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) return res.status(404).json({ message: 'Course not found' });
+
+    const { courseId, title, description, videoEmbedLinks, modules, price } = req.body;
+
+    if (courseId !== undefined && courseId !== course.courseId) {
+      const existing = await Course.findOne({ courseId });
+      if (existing && String(existing._id) !== String(course._id)) {
+        return res.status(400).json({ message: 'A course with that courseId already exists' });
+      }
+      course.courseId = courseId;
+    }
+    if (title !== undefined) course.title = title;
+    if (description !== undefined) course.description = description;
+    if (videoEmbedLinks !== undefined) {
+      course.videoEmbedLinks = Array.isArray(videoEmbedLinks) ? videoEmbedLinks : [];
+    }
+    if (modules !== undefined) {
+      course.modules = Array.isArray(modules) ? modules : [];
+    }
+    if (price !== undefined) {
+      const n = Number(price);
+      if (Number.isNaN(n)) {
+        return res.status(400).json({ message: 'price must be a number' });
+      }
+      course.price = n;
+    }
+
+    await course.save();
+    res.json(course);
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
 // ─── POST /api/courses/:id/docs — Admin upload doc to course module (A3) ─────
 export const uploadDoc = async (req: Request, res: Response) => {
   try {

@@ -13,6 +13,7 @@ export interface IUser {
   passwordHash: string;
   role: UserRole;
   enrolledCourses: Types.ObjectId[];
+  is_active: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -20,7 +21,7 @@ export interface IUser {
 // IUserDocument is the hydrated Mongoose document — derived from the model,
 // not by manually extending Document (which triggers TS2589).
 export type IUserDocument = HydratedDocument<IUser>;
-export type NewUserInput = Omit<IUser, 'createdAt' | 'updatedAt'>;
+export type NewUserInput = Omit<IUser, 'createdAt' | 'updatedAt' | 'is_active'>;
 
 const userSchemaFields: Record<keyof Omit<IUser, 'createdAt' | 'updatedAt'>, any> = {
   username: { type: String, required: true, unique: true, trim: true },
@@ -33,6 +34,7 @@ const userSchemaFields: Record<keyof Omit<IUser, 'createdAt' | 'updatedAt'>, any
   passwordHash: { type: String, required: true },
   role: { type: String, enum: ['Admin', 'User'], default: 'User' },
   enrolledCourses: [{ type: Schema.Types.ObjectId, ref: 'Course' }],
+  is_active: { type: Boolean, default: true },
 };
 
 // Schema and model both use the plain IUser interface — Mongoose v6+ pattern.

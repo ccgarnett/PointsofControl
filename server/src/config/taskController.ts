@@ -1,4 +1,5 @@
-import {Request, Response} from 'express';
+import type { AuthRequest } from './authMiddleware';
+import { Response } from 'express';
 import {Types} from 'mongoose';
 import Task from './Task';
 import type {ITask} from './Task';
@@ -14,11 +15,11 @@ const localDateConversion = () => {
 };
 
 //first attempt at auto-archiving functionality that automatically archives tasks after a day
-export const makeArchived = async (req: Request, res: Response) => {
+export const makeArchived = async (req: AuthRequest, res: Response) => {
     try{
-        const user_id = String(req.query.user_id || '');
+        const user_id = String(req.user?.id || '');
         if(!user_id || !isValidObjectId(user_id)){
-            return res.status(400).json({message:'Invalid user id.'});
+            return res.status(401).json({message:'Unauthorized'});
         }
 
         const autoArchive = await Task.updateMany(
@@ -29,13 +30,13 @@ export const makeArchived = async (req: Request, res: Response) => {
     }catch(error){res.status(500).json({message:'Server Error'});}
 };
 
-export const createTask = async (req: Request, res: Response) => {
+export const createTask = async (req: AuthRequest, res: Response) => {
     try{
-        const user_id = String(req.query.user_id || '');
+        const user_id = String(req.user?.id || '');
         const description = String(req.body?.description || '').trim();
         const dateKey = String(req.body?.dateKey || req.query.date || localDateConversion());
         if(!user_id || !isValidObjectId(user_id)){
-            return res.status(400).json({message:'Invalid user id.'});
+            return res.status(401).json({message:'Unauthorized'});
         }
         if(!description){
             return res.status(400).json({message:'description required.'});
@@ -51,12 +52,12 @@ export const createTask = async (req: Request, res: Response) => {
     }catch(error){res.status(500).json({message:'Server Error'})};
 };
 
-export const readTask = async (req: Request, res: Response) => {
+export const readTask = async (req: AuthRequest, res: Response) => {
     try{
-        const user_id = String(req.query.user_id || '');
+        const user_id = String(req.user?.id || '');
         const dateKey = String(req.query.date || localDateConversion());
         if(!user_id || !isValidObjectId(user_id)){
-            return res.status(400).json({message:'Invalid user id.'});
+            return res.status(401).json({message:'Unauthorized'});
         }
         const tasks = await Task.find({
             user_id,
@@ -67,12 +68,12 @@ export const readTask = async (req: Request, res: Response) => {
     }catch(error){res.status(500).json({message:'Server Error'})}
 };
 
-export const updateTask = async (req: Request, res: Response) => {
+export const updateTask = async (req: AuthRequest, res: Response) => {
     try{
-        const user_id = String(req.query.user_id || '');
+        const user_id = String(req.user?.id || '');
         const task_id = String(req.params.task_id || req.params.id || '');
         if(!user_id || !isValidObjectId(user_id)){
-            return res.status(400).json({message:'Invalid user id.'});
+            return res.status(401).json({message:'Unauthorized'});
         }
         if(!task_id || !isValidObjectId(task_id)){
             return res.status(400).json({message:'Task does not exist.'});
@@ -106,12 +107,12 @@ export const updateTask = async (req: Request, res: Response) => {
     }catch(error){res.status(500).json({message:'Server Error'})};
 };
 
-export const deleteTask = async (req: Request, res: Response) => {
+export const deleteTask = async (req: AuthRequest, res: Response) => {
     try{
-        const user_id = String(req.query.user_id || '');
+        const user_id = String(req.user?.id || '');
         const task_id = String(req.params.id || '');
         if(!user_id || !isValidObjectId(user_id)){
-            return res.status(400).json({message:'Invalid user id.'});
+            return res.status(401).json({message:'Unauthorized'});
         }
         if(!task_id || !isValidObjectId(task_id)){
             return res.status(400).json({message:'Task does not exist.'});
@@ -122,12 +123,12 @@ export const deleteTask = async (req: Request, res: Response) => {
     }catch(error){res.status(500).json({message:'Server Error'})};
 };
 
-export const readArchive = async (req: Request, res: Response) => {
+export const readArchive = async (req: AuthRequest, res: Response) => {
     try{
-        const user_id = String(req.query.user_id || '');
+        const user_id = String(req.user?.id || '');
         const dateKey = String(req.query.date || localDateConversion());
         if(!user_id || !isValidObjectId(user_id)){
-            return res.status(400).json({message:'Invalid user id.'});
+            return res.status(401).json({message:'Unauthorized'});
         }
         const tasks = await Task.find({
             user_id,

@@ -47,6 +47,14 @@ export const loginUser = async (req: Request, res: Response) => {
     if (!pwMatch) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
+
+    //for reactivating a deactivated account
+    if(!user.is_active){
+        user.is_active = true;
+        await user.save();
+    }
+    
+
     const token = jwt.sign(
       { id: String(user._id), username: user.username, role: user.role },
       JWT_SECRET,
@@ -112,6 +120,21 @@ export const deleteUserById = async (req: Request, res: Response) => {
     res.status(204).end();
   }
   catch{res.status(500).json({message: 'Server Error'});}
+};
+
+export const deactivateUserById = async (req: Request, res: Response) => {
+  try{
+    const user = await User.findById(req.params.id);
+    const {password} = req.body;
+    if(!user) return res.status(404).json({message: 'User not found'});
+    const pwMatch = await bcrypt.compare(String(password), user.passwordHash);
+    if (!pwMatch) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+    user.is_active = false;
+    await user.save();
+    res.status(200).json({message:'account deactivated'});
+  }catch{res.status(500).json({message:'Server Error'});}
 };
 
 // Export the Multer middleware

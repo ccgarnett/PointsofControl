@@ -6,6 +6,7 @@ import connectDB from './src/config/db';
 import {
   getCourses,
   createCourse,
+  updateCourse,
   deleteCourse,
   uploadDocMiddleware,
   uploadDoc,
@@ -33,13 +34,12 @@ import {
 } from './src/config/messageController';
 connectDB();
 import {
-  makeArchived,
   createTask,
   readTask,
   updateTask,
   deleteTask,
-  readArchive,
 } from './src/config/taskController';
+import { requireAuth } from './src/config/authMiddleware';
 connectDB();
 
 const app = express();
@@ -52,6 +52,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // ── Courses ──────────────────────────────────────────────────────────────────
 app.get('/api/courses', getCourses);
 app.post('/api/courses', createCourse);
+app.put('/api/courses/:id', updateCourse);
 app.delete('/api/courses/:id', deleteCourse);
 app.post('/api/courses/:id/docs', uploadDocMiddleware, uploadDoc);
 app.patch('/api/courses/:courseId/modules/:moduleIndex/complete', toggleModuleComplete);
@@ -77,11 +78,10 @@ app.put('/api/users/:id', updateUserById);
 app.delete('/api/users/:id', deleteUserById);
 
 // ── Checklist ──────────────────────────────────────────────────────────────────── 
-app.get('/api/checklist', readTask);
-app.get('api/checklist/archive', readArchive);
-app.post('api/checklist', createTask);
-app.patch('api/checklist/:id', updateTask);
-app.delete('api/checklist/:id', deleteTask);
+app.get('/api/checklist', requireAuth, readTask);
+app.post('/api/checklist', requireAuth, createTask);
+app.patch('/api/checklist/:id', requireAuth, updateTask);
+app.delete('/api/checklist/:id', requireAuth, deleteTask);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
