@@ -42,6 +42,11 @@ const Sidebar: React.FC = () => {
           <span>You</span>
         </Link>
 
+        <Link to="/calendar" className={`nav-item${location.pathname === '/calendar' ? ' active' : ''}`}>
+          <div className="icon">📅</div>
+          <span>Calendar</span>
+        </Link>
+
         {isAdmin && (
           <>
             <Link to="/admin/courses/create" className={`nav-item${location.pathname === '/admin/courses/create' ? ' active' : ''}`}>

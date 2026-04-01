@@ -1176,3 +1176,204 @@ select:focus {
   font-weight: 600;
   color: #22c55e;
 }
+
+/* ── Forgot Password link (U11) ─────────────────────────────────────────── */
+.forgot-password-link {
+  text-align: right;
+  margin-top: -0.25rem;
+}
+
+.forgot-password-link a {
+  font-size: 0.8rem;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.forgot-password-link a:hover {
+  text-decoration: underline;
+}
+
+/* ── Course Interactions filter (A12/A13) ───────────────────────────────── */
+.interaction-filter-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.interaction-filter-btn {
+  padding: 0.35rem 0.9rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  background: var(--bg-card);
+  color: var(--text-body);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.interaction-filter-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.interaction-filter-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(99, 102, 241, 0.08);
+  font-weight: 600;
+}
+
+/* ── Calendar (U10) ─────────────────────────────────────────────────────── */
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.cal-nav-btn {
+  padding: 0.35rem 0.875rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  background: var(--bg-card);
+  color: var(--text-body);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.cal-nav-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.cal-today-btn {
+  padding: 0.35rem 0.875rem;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: rgba(99, 102, 241, 0.08);
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.cal-today-btn:hover {
+  background: rgba(99, 102, 241, 0.18);
+}
+
+.cal-week-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-heading);
+  flex: 1;
+  text-align: center;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.75rem;
+  min-height: 400px;
+}
+
+.calendar-day {
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--bg-card);
+  padding: 0.75rem;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.calendar-day--today {
+  border-color: var(--accent);
+  background: rgba(99, 102, 241, 0.04);
+}
+
+.calendar-day-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.4rem;
+}
+
+.calendar-day-name {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-body);
+  opacity: 0.6;
+}
+
+.calendar-day-date {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.calendar-day-date--today {
+  color: var(--accent);
+}
+
+.calendar-task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+}
+
+.calendar-task {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+
+.calendar-task--done .calendar-task-title {
+  text-decoration: line-through;
+  opacity: 0.45;
+}
+
+.calendar-task-check {
+  color: var(--accent);
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  margin-top: 0.05rem;
+}
+
+.calendar-task--done .calendar-task-check {
+  color: #22c55e;
+}
+
+.calendar-task-title {
+  color: var(--text-body);
+}
+
+.calendar-empty {
+  font-size: 0.75rem;
+  color: var(--text-body);
+  opacity: 0.35;
+  margin: 0;
+  font-style: italic;
+}
+
+@media (max-width: 900px) {
+  .calendar-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .calendar-grid {
+    grid-template-columns: 1fr;
+  }
+}

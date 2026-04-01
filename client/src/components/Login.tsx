@@ -61,6 +61,9 @@ const Login: React.FC = () => {
               required
             />
           </div>
+          <div className="forgot-password-link">
+            <Link to="/forgot-password">Forgot Password?</Link>
+          </div>
           <button type="submit" className="btn-submit" disabled={loading}>
             {loading ? 'Signing in...' : 'Sign In'}
           </button>

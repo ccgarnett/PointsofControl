@@ -36,6 +36,9 @@ import {
   acknowledgeMessage,
 } from './src/config/messageController';
 import { logClick, getClickAnalytics } from './src/config/clickController';
+import { forgotPassword, resetPassword } from './src/config/authController';
+import { getCourseInteractionAnalytics } from './src/config/courseInteractionController';
+import { getCalendarTasks } from './src/config/calendarController';
 connectDB();
 
 const app = express();
@@ -55,6 +58,7 @@ app.get('/api/analytics/courses', getCourseAnalytics);
 app.get('/api/admin/analytics/purchases', requireAuth, requireAdmin, getPurchaseAnalytics);
 app.post('/api/analytics/click', logClick);
 app.get('/api/admin/analytics/clicks', requireAuth, requireAdmin, getClickAnalytics);
+app.get('/api/admin/analytics/courses', requireAuth, requireAdmin, getCourseInteractionAnalytics);
 
 // ── Messages ─────────────────────────────────────────────────────────────────
 app.get('/api/messages', getMessages);
@@ -67,6 +71,8 @@ app.delete('/api/messages/:id', deleteMessage);
 // ── Auth ─────────────────────────────────────────────────────────────────────
 app.post('/api/auth/login', loginUser);
 app.post('/api/auth/logout', logoutUser);
+app.post('/api/auth/forgot-password', forgotPassword);
+app.post('/api/auth/reset-password/:token', resetPassword);
 
 // ── Users ────────────────────────────────────────────────────────────────────
 app.post('/api/users/register', registerUser);
@@ -80,6 +86,9 @@ app.get('/api/users', listUsers);
 app.get('/api/users/:id', getUserById);
 app.put('/api/users/:id', updateUserById);
 app.delete('/api/users/:id', deleteUserById);
+
+// ── Calendar ──────────────────────────────────────────────────────────────────
+app.get('/api/calendar/tasks', requireAuth, getCalendarTasks);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
