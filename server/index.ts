@@ -27,6 +27,7 @@ import {
   getUserById,
   updateUserById,
   deleteUserById,
+  deactivateUserById,
 } from './src/config/userController';
 import {
   getMessages,
@@ -95,6 +96,7 @@ app.get('/api/users', listUsers);
 app.get('/api/users/:id', getUserById);
 app.put('/api/users/:id', updateUserById);
 app.delete('/api/users/:id', deleteUserById);
+app.post('/api/users/:id/deactivate', requireAuth, deactivateUserById);
 
 // ── Checklist ────────────────────────────────────────────────────────────────
 app.get('/api/checklist', requireAuth, readTask);
