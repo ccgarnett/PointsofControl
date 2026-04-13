@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { useAuth } from '../context/AuthContext';
+import { KeyboardReturnOutlined } from '@mui/icons-material';
 
 type Status = { type: 'success' | 'error' | 'info'; text: string } | null;
 
@@ -35,14 +36,14 @@ const usePasswordMatch = () => {
 
 
 const UserSettings: React.FC = () => {
-    const { user: authUser, logout } = useAuth();
+    const { user: authUser, token, logout } = useAuth();
 
     useEffect(() => {
         document.title = 'Points of Control — Account Settings';
     }, []);
     const navigate = useNavigate();
     const [status, setStatus] = useState<Status>(null);
-    const [busy, setBusy] = useState<'update' | 'delete' | null>(null);
+    const [busy, setBusy] = useState<'update' | 'delete' | 'deactivate' | null>(null);
     const [name, setName] = useState('');
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
@@ -178,6 +179,44 @@ const UserSettings: React.FC = () => {
         }
     };
 
+    const deactivateAccount = async () => {
+      const userId = getUserId();
+      if(!userId){
+        setStatus({type: 'info', text: 'No account found.'});
+        return;
+      }
+      if(!token){
+        setStatus({type:'info', text: 'Please login again.'});
+        return;
+      }
+
+      const pwd = window.prompt('Please enter your password to confirm account deactivation.');
+      if (!pwd) return;
+      
+      setBusy('deactivate');
+      setStatus(null);
+
+      try{
+        const res = await fetch(`/api/users/${userId}/deactivate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({password: pwd}),
+        });
+
+        const data = await res.json().catch(()=>({}));
+        if (!res.ok) throw new Error(data.message || 'Account deactivation failed.');
+
+        setStatus({type: 'success', text: 'Account deactivated.'});
+        logout();
+        navigate('/login');
+      }catch(err){
+        setStatus({type:'error', text:(err as Error).message || 'Account deactivation failed.'});
+      }finally{setBusy(null);}
+    };
+
 
   return (
     <div className="dashboard-layout">
@@ -273,7 +312,7 @@ const UserSettings: React.FC = () => {
               type="button"
               className="btn-submit"
               onClick={handleUpdateAccount}
-              disabled={busy === 'update' || busy === 'delete'}
+              disabled={busy === 'update' || busy === 'delete' || busy === 'deactivate'}
             >
               {busy === 'update' ? 'Updating…' : 'Update Account'}
             </button>
@@ -281,9 +320,18 @@ const UserSettings: React.FC = () => {
               type="button"
               className="btn-remove"
               onClick={deleteAccount}
-              disabled={busy === 'delete' || busy === 'update'}
+              disabled={busy === 'delete' || busy === 'update' || busy === 'deactivate'}
             >
               {busy === 'delete' ? 'Deleting…' : 'Delete Account'}
+            </button>
+
+            <button
+              type="button"
+              className="btn-deactivate"
+              onClick={deactivateAccount}
+              disabled={busy === 'deactivate' || busy === 'delete' || busy === 'update'}
+              >
+                {busy === 'deactivate' ? 'Deactivating...':'Deactivate Account'}
             </button>
           </div>
         </section>

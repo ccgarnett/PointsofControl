@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { useAuth } from '../context/AuthContext';
 import { SkeletonPage } from './Skeleton';
+import { Button } from '@mui/material';
 
 interface ApiModule {
   title: string;
@@ -26,6 +27,10 @@ const Courses: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [editMode, setEditMode] = useState<Course | null>(null);
+  const [editForm, setEditForm] = useState({courseId:'', title:'', description:''});
+  const [editSave, setEditSave] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   useEffect(() => {
     document.title = 'Points of Control — Courses';
@@ -54,6 +59,30 @@ const Courses: React.FC = () => {
     fetchCourses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleEdit = async () => {
+    if(!editMode) return;
+    setEditSave(true);
+    setEditError(null);
+
+    try{
+      const res = await fetch(`/api/courses/${editMode._id}`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          courseId: editForm.courseId,
+          title: editForm.title,
+          description: editForm.description
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Course update failed');
+
+      setEditMode(null);
+      fetchCourses();
+    }catch(err){setEditError((err as Error).message);}
+    finally{setEditSave(false);}
+  };
 
   const handleDelete = async (e: React.MouseEvent, courseId: string) => {
     e.preventDefault();
@@ -119,10 +148,98 @@ const Courses: React.FC = () => {
                     </button>
                   )
                 )}
+                {isAdmin && (<button className="btn-edit-course" 
+                onClick={(e) => {e.preventDefault(); setEditMode(course);
+                  setEditForm({
+                    courseId: course.courseId,
+                    title: course.title,
+                    description: course.description ?? ''
+                  });
+                  setEditError(null);
+                }}>Edit</button>)}
               </div>
             ))}
           </div>
         )}
+        {editMode && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '1rem',
+          }}
+          onClick={() => {
+            if (!editSave) setEditMode(null);
+          }}
+        >
+          <div
+            style={{
+              width: 'min(560px, 100%)',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 12,
+              padding: '1.25rem',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ marginTop: 0 }}>Edit course</h3>
+
+            <div className="form-group">
+              <label>Course ID</label>
+              <input
+                value={editForm.courseId}
+                disabled={editSave}
+                onChange={(e) => setEditForm((p) => ({ ...p, courseId: e.target.value }))}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Title</label>
+              <input
+                value={editForm.title}
+                disabled={editSave}
+                onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Description</label>
+              <textarea
+                rows={3}
+                value={editForm.description}
+                disabled={editSave}
+                onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
+              />
+            </div>
+
+            {editError && <p style={{ color: '#ef4444' }}>{editError}</p>}
+
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                className="btn-confirm-no"
+                disabled={editSave}
+                onClick={() => setEditMode(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-confirm-yes"
+                disabled={editSave}
+                onClick={() => void handleEdit()}
+              >
+                {editSave ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       </main>
     </div>
   );
