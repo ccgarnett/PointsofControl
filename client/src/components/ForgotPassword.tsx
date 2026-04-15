@@ -38,7 +38,7 @@ const ForgotPassword: React.FC = () => {
         <h2>Forgot Password</h2>
         {submitted ? (
           <div className="form-message success">
-            If that email exists, we sent a reset link. Check your inbox (or the server console).
+            If that email exists, we sent a reset link. Check your email inbox.
           </div>
         ) : (
           <>

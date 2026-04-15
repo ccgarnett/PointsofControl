@@ -47,6 +47,13 @@ const Sidebar: React.FC = () => {
           <span>Calendar</span>
         </Link>
 
+        {!isAdmin && (
+          <Link to="/chat" className={`nav-item${location.pathname === '/chat' ? ' active' : ''}`}>
+            <div className="icon">💬</div>
+            <span>Chat Jordan</span>
+          </Link>
+        )}
+
         {isAdmin && (
           <>
             <Link to="/admin/courses/create" className={`nav-item${location.pathname === '/admin/courses/create' ? ' active' : ''}`}>
@@ -67,6 +74,11 @@ const Sidebar: React.FC = () => {
             <Link to="/admin/users" className={`nav-item${location.pathname === '/admin/users' ? ' active' : ''}`}>
               <div className="icon">👥</div>
               <span>User Management</span>
+            </Link>
+
+            <Link to="/admin/chat" className={`nav-item${location.pathname === '/admin/chat' ? ' active' : ''}`}>
+              <div className="icon">💬</div>
+              <span>User Chats</span>
             </Link>
           </>
         )}

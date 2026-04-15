@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { SkeletonPage } from './Skeleton';
@@ -28,11 +28,13 @@ const isDocument = (url: string) => {
 const CourseDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [course, setCourse] = useState<CourseData | null>(null);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState<number | null>(null);
   const [enrollClicked, setEnrollClicked] = useState(false);
+  const enteredAt = useRef<number>(Date.now());
+  const [completedModules, setCompletedModules] = useState<number[]>([]);
 
   useEffect(() => {
     fetch('/api/courses')
@@ -67,17 +69,59 @@ const CourseDetail: React.FC = () => {
     document.title = course ? `Points of Control — ${course.title}` : 'Points of Control';
   }, [course]);
 
-  const handleToggleComplete = async (moduleIndex: number) => {
+  // Fetch per-user progress when course and token are available
+  useEffect(() => {
+    if (!course || !token) return;
+    fetch(`/api/courses/${course._id}/progress`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data.completedModules)) {
+          setCompletedModules(data.completedModules);
+        }
+      })
+      .catch(() => {});
+  }, [course, token]);
+
+  // Track time on page — POST duration when component unmounts
+  useEffect(() => {
     if (!course) return;
+    const courseId = course._id;
+    const entered = enteredAt.current;
+
+    const postDuration = () => {
+      const duration = Math.round((Date.now() - entered) / 1000); // seconds
+      fetch('/api/analytics/click', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId, userId: user?.id ?? null, eventType: 'time_on_page', duration }),
+      }).catch(() => {});
+    };
+
+    window.addEventListener('beforeunload', postDuration);
+    return () => {
+      window.removeEventListener('beforeunload', postDuration);
+      postDuration();
+    };
+  }, [course]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleToggleComplete = async (moduleIndex: number) => {
+    if (!course || !token) return;
     setToggling(moduleIndex);
     try {
       const res = await fetch(
         `/api/courses/${course._id}/modules/${moduleIndex}/complete`,
-        { method: 'PATCH' }
+        {
+          method: 'PATCH',
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
       if (!res.ok) throw new Error('Toggle failed');
       const data = await res.json();
-      setCourse(data.course);
+      if (Array.isArray(data.completedModules)) {
+        setCompletedModules(data.completedModules);
+      }
     } catch {
       alert('Could not update lesson status. Please try again.');
     } finally {
@@ -90,7 +134,7 @@ const CourseDetail: React.FC = () => {
 
   const videos = course.videoEmbedLinks || [];
   const modules = course.modules || [];
-  const completedCount = modules.filter((m) => m.completed).length;
+  const completedCount = completedModules.length;
   const progress = modules.length > 0
     ? Math.round((completedCount / modules.length) * 100)
     : 0;
@@ -162,34 +206,39 @@ const CourseDetail: React.FC = () => {
         {modules.length > 0 && (
           <section className="course-modules-section">
             <h3>Modules</h3>
-            {modules.map((mod, i) => (
-              <div key={i} className={`module-block${mod.completed ? ' completed' : ''}`}>
-                <div className="module-block-body">
-                  <h4 className={`module-block-title${mod.completed ? ' done' : ''}`}>
-                    {i + 1}. {mod.title}
-                  </h4>
-                  {mod.contentUrl && (
-                    isDocument(mod.contentUrl) ? (
-                      <a href={mod.contentUrl} target="_blank" rel="noreferrer" className="module-doc-link">
-                        📄 View Document
-                      </a>
-                    ) : (
-                      <div className="video-embed-wrapper">
-                        <iframe
-                          src={mod.contentUrl}
-                          title={mod.title}
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                        />
-                      </div>
-                    )
+            {modules.map((mod, i) => {
+              const isDone = completedModules.includes(i);
+              return (
+                <div key={i} className={`module-block${isDone ? ' completed' : ''}`}>
+                  <div className="module-block-body">
+                    <h4 className={`module-block-title${isDone ? ' done' : ''}`}>
+                      {i + 1}. {mod.title}
+                    </h4>
+                    {mod.contentUrl && (
+                      isDocument(mod.contentUrl) ? (
+                        <a href={mod.contentUrl} target="_blank" rel="noreferrer" className="module-doc-link">
+                          📄 View Document
+                        </a>
+                      ) : (
+                        <div className="video-embed-wrapper">
+                          <iframe
+                            src={mod.contentUrl}
+                            title={mod.title}
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        </div>
+                      )
+                    )}
+                  </div>
+                  {token && (
+                    <button onClick={() => handleToggleComplete(i)} disabled={toggling === i} className={`module-toggle-btn${isDone ? ' done' : ''}`}>
+                      {getButtonLabel(i, isDone)}
+                    </button>
                   )}
                 </div>
-                <button onClick={() => handleToggleComplete(i)} disabled={toggling === i} className={`module-toggle-btn${mod.completed ? ' done' : ''}`}>
-                  {getButtonLabel(i, mod.completed)}
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </section>
         )}
 

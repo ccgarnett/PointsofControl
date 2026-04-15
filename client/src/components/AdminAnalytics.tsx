@@ -2,9 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import Sidebar from './Sidebar';
 import { SkeletonPage } from './Skeleton';
 import { useAuth } from '../context/AuthContext';
-import { Chart, BarController, BarElement, CategoryScale, LinearScale, Legend, Tooltip } from 'chart.js';
+import { Chart, BarController, BarElement, CategoryScale, LinearScale, Legend, Tooltip, Title } from 'chart.js';
 
-Chart.register(BarController, BarElement, CategoryScale, LinearScale, Legend, Tooltip);
+Chart.register(BarController, BarElement, CategoryScale, LinearScale, Legend, Tooltip, Title);
 
 interface CourseAnalytic {
   _id: string;
@@ -42,6 +42,14 @@ interface InteractionAnalytic {
   totalInteractions: number;
 }
 
+interface TimeOnPageAnalytic {
+  _id: string;
+  courseId: string;
+  title: string;
+  avgDuration: number;
+  sessionCount: number;
+}
+
 const PERIODS = [
   { label: 'Today', value: 'day' },
   { label: 'This Week', value: 'week' },
@@ -70,8 +78,18 @@ const AdminAnalytics: React.FC = () => {
   const [interactionError, setInteractionError] = useState<string | null>(null);
   const [interactionPeriod, setInteractionPeriod] = useState<string>('all');
 
+  const [timeOnPage, setTimeOnPage] = useState<TimeOnPageAnalytic[]>([]);
+  const [timeOnPageLoading, setTimeOnPageLoading] = useState(true);
+  const [timeOnPageError, setTimeOnPageError] = useState<string | null>(null);
+
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
+
+  const purchaseChartRef = useRef<HTMLCanvasElement>(null);
+  const purchaseChartInstance = useRef<Chart | null>(null);
+
+  const interactionChartRef = useRef<HTMLCanvasElement>(null);
+  const interactionChartInstance = useRef<Chart | null>(null);
 
   useEffect(() => {
     document.title = 'Points of Control — Analytics';
@@ -157,6 +175,26 @@ const AdminAnalytics: React.FC = () => {
   }, [token]);
 
   useEffect(() => {
+    if (!token) return;
+    fetch('/api/admin/analytics/time-on-page', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setTimeOnPage(data);
+        } else {
+          setTimeOnPageError('Unexpected response from server');
+        }
+        setTimeOnPageLoading(false);
+      })
+      .catch(() => {
+        setTimeOnPageError('Failed to load time-on-page analytics');
+        setTimeOnPageLoading(false);
+      });
+  }, [token]);
+
+  useEffect(() => {
     if (!analytics.length || !chartRef.current) return;
 
     if (chartInstance.current) chartInstance.current.destroy();
@@ -190,6 +228,64 @@ const AdminAnalytics: React.FC = () => {
     };
   }, [analytics]);
 
+  useEffect(() => {
+    if (!purchases.length || !purchaseChartRef.current) return;
+    if (purchaseChartInstance.current) purchaseChartInstance.current.destroy();
+    purchaseChartInstance.current = new Chart(purchaseChartRef.current, {
+      type: 'bar',
+      data: {
+        labels: purchases.map((p) => p.title),
+        datasets: [
+          {
+            label: 'Enrollments',
+            data: purchases.map((p) => p.purchaseCount),
+            backgroundColor: 'rgba(99, 102, 241, 0.8)',
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'top' } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+      },
+    });
+    return () => { if (purchaseChartInstance.current) purchaseChartInstance.current.destroy(); };
+  }, [purchases]);
+
+  useEffect(() => {
+    if (!interactions.length || !interactionChartRef.current) return;
+    if (interactionChartInstance.current) interactionChartInstance.current.destroy();
+    interactionChartInstance.current = new Chart(interactionChartRef.current, {
+      type: 'bar',
+      data: {
+        labels: interactions.map((i) => i.courseTitle),
+        datasets: [
+          {
+            label: 'Page Views',
+            data: interactions.map((i) => i.pageViews),
+            backgroundColor: 'rgba(74, 144, 226, 0.8)',
+          },
+          {
+            label: 'Enroll Clicks',
+            data: interactions.map((i) => i.enrollClicks),
+            backgroundColor: 'rgba(99, 102, 241, 0.8)',
+          },
+          {
+            label: 'Purchases',
+            data: interactions.map((i) => i.purchases),
+            backgroundColor: 'rgba(34, 197, 94, 0.8)',
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'top' } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+      },
+    });
+    return () => { if (interactionChartInstance.current) interactionChartInstance.current.destroy(); };
+  }, [interactions]);
+
   if (loading) return <SkeletonPage cards={2} />;
   if (error) return (
     <div className="dashboard-layout">
@@ -208,6 +304,23 @@ const AdminAnalytics: React.FC = () => {
         <header className="top-header">
           <h1>Points Of Control</h1>
           <h2>Course Analytics</h2>
+          <button
+            className="btn-export-csv"
+            onClick={async () => {
+              const res = await fetch('/api/admin/analytics/export/csv', {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              const blob = await res.blob();
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'analytics.csv';
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+          >
+            Export CSV
+          </button>
         </header>
 
         {analytics.length === 0 ? (
@@ -282,30 +395,35 @@ const AdminAnalytics: React.FC = () => {
                 <p>Enrollment data will appear here once users sign up for courses.</p>
               </div>
             ) : (
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Course</th>
-                    <th>ID</th>
-                    <th>Price</th>
-                    <th>Enrollments</th>
-                    <th>Revenue</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {purchases.map((p) => (
-                    <tr key={p._id}>
-                      <td>{p.title}</td>
-                      <td className="muted">{p.courseId}</td>
-                      <td>${p.price.toLocaleString()}</td>
-                      <td>{p.purchaseCount}</td>
-                      <td style={{ color: '#22c55e', fontWeight: 600 }}>
-                        ${p.totalRevenue.toLocaleString()}
-                      </td>
+              <>
+                <div className="analytics-chart-wrap">
+                  <canvas ref={purchaseChartRef} />
+                </div>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Course</th>
+                      <th>ID</th>
+                      <th>Price</th>
+                      <th>Enrollments</th>
+                      <th>Revenue</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {purchases.map((p) => (
+                      <tr key={p._id}>
+                        <td>{p.title}</td>
+                        <td className="muted">{p.courseId}</td>
+                        <td>${p.price.toLocaleString()}</td>
+                        <td>{p.purchaseCount}</td>
+                        <td style={{ color: '#22c55e', fontWeight: 600 }}>
+                          ${p.totalRevenue.toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
             )}
           </>
         )}
@@ -380,28 +498,66 @@ const AdminAnalytics: React.FC = () => {
             <p>Data will appear once courses have page views, enroll clicks, or purchases.</p>
           </div>
         ) : (
+          <>
+            <div className="analytics-chart-wrap">
+              <canvas ref={interactionChartRef} />
+            </div>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Course</th>
+                  <th>Page Views</th>
+                  <th>Enroll Clicks</th>
+                  <th>Purchases</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {interactions.map((item, idx) => (
+                  <tr key={item.courseId}>
+                    <td className="muted">{idx + 1}</td>
+                    <td>{item.courseTitle}</td>
+                    <td>{item.pageViews}</td>
+                    <td>{item.enrollClicks}</td>
+                    <td>{item.purchases}</td>
+                    <td style={{ color: 'var(--accent)', fontWeight: 600 }}>
+                      {item.totalInteractions}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
+        {/* ── Time on Page Analytics (A14) ───────────────────────────── */}
+        <div className="section-heading-row" style={{ marginTop: '2.5rem' }}>
+          <h3 className="section-heading">Time on Page</h3>
+        </div>
+
+        {timeOnPageLoading ? (
+          <p className="muted">Loading time-on-page data…</p>
+        ) : timeOnPageError ? (
+          <p style={{ color: '#ef4444' }}>{timeOnPageError}</p>
+        ) : (
           <table className="data-table">
             <thead>
               <tr>
-                <th>Rank</th>
                 <th>Course</th>
-                <th>Page Views</th>
-                <th>Enroll Clicks</th>
-                <th>Purchases</th>
-                <th>Total</th>
+                <th>ID</th>
+                <th>Avg Time (sec)</th>
+                <th>Sessions</th>
               </tr>
             </thead>
             <tbody>
-              {interactions.map((item, idx) => (
-                <tr key={item.courseId}>
-                  <td className="muted">{idx + 1}</td>
-                  <td>{item.courseTitle}</td>
-                  <td>{item.pageViews}</td>
-                  <td>{item.enrollClicks}</td>
-                  <td>{item.purchases}</td>
+              {timeOnPage.map((t) => (
+                <tr key={t._id}>
+                  <td>{t.title}</td>
+                  <td className="muted">{t.courseId}</td>
                   <td style={{ color: 'var(--accent)', fontWeight: 600 }}>
-                    {item.totalInteractions}
+                    {t.avgDuration > 0 ? `${t.avgDuration}s` : '—'}
                   </td>
+                  <td>{t.sessionCount}</td>
                 </tr>
               ))}
             </tbody>

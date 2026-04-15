@@ -20,6 +20,8 @@ import About from './components/About';
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
 import Calendar from './components/Calendar';
+import ChatJordan from './components/ChatJordan';
+import AdminChat from './components/AdminChat';
 
 function App() {
   return (
@@ -41,6 +43,8 @@ function App() {
           <Route path="/messages" element={<AdminMessages />} />
           <Route path="/about" element={<About />} />
           <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
+          <Route path="/chat" element={<ProtectedRoute><ChatJordan /></ProtectedRoute>} />
+          <Route path="/admin/chat" element={<AdminRoute><AdminChat /></AdminRoute>} />
           <Route path="/account-settings" element={<ProtectedRoute><UserSettings /></ProtectedRoute>} />
           <Route path="/admin/users" element={<AdminRoute><AdminDirectory /></AdminRoute>} />
         </Routes>

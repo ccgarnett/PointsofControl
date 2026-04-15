@@ -1,5 +1,6 @@
 import request from 'supertest';
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import {
   getCourses,
   createCourse,
@@ -13,8 +14,12 @@ import {
   updateMessage,
   deleteMessage,
 } from './messageController';
+import { requireAuth } from './authMiddleware';
 import Course from './Course';
 import Message from './Message';
+
+jest.mock('jsonwebtoken');
+jest.mock('./UserProgress');
 
 // ─── Test App Setup ───────────────────────────────────────────────────────────
 let mockFile: { filename: string; originalname: string } | null = null;
@@ -23,7 +28,7 @@ const app = express();
 app.use(express.json());
 app.get('/api/courses', getCourses);
 app.post('/api/courses', createCourse);
-app.patch('/api/courses/:courseId/modules/:moduleIndex/complete', toggleModuleComplete);
+app.patch('/api/courses/:courseId/modules/:moduleIndex/complete', requireAuth, toggleModuleComplete);
 app.get('/api/analytics/courses', getCourseAnalytics);
 app.post('/api/courses/:id/docs', (req: any, _res: any, next: any) => {
   req.file = mockFile;
@@ -36,6 +41,12 @@ app.delete('/api/messages/:id', deleteMessage);
 
 jest.mock('./Course');
 jest.mock('./Message');
+
+const AUTH = { Authorization: 'Bearer user.token' };
+
+beforeEach(() => {
+  (jwt.verify as jest.Mock).mockReturnValue({ id: 'uid1', username: 'chase', role: 'User' });
+});
 
 // ═══════════════════════════════════════════════════════════════════
 // A3 — Upload Document to Course
@@ -164,43 +175,57 @@ describe('A7 — Dashboard Messages', () => {
 // U9 — Lesson Tracking (Toggle Module Complete)
 // ═══════════════════════════════════════════════════════════════════
 describe('U9 — Lesson Tracking', () => {
+  // Import UserProgress dynamically so jest.mock hoisting takes effect
+  let UserProgress: any;
+  beforeAll(async () => {
+    UserProgress = (await import('./UserProgress')).default;
+  });
+
+  it('should return 401 without an auth token', async () => {
+    const res = await request(app).patch('/api/courses/badId/modules/0/complete');
+    expect(res.status).toBe(401);
+  });
+
   it('should return 404 when course is not found', async () => {
     (Course.findById as jest.Mock).mockResolvedValue(null);
-    const res = await request(app).patch('/api/courses/badId/modules/0/complete');
+    const res = await request(app).patch('/api/courses/badId/modules/0/complete').set(AUTH);
     expect(res.status).toBe(404);
   });
 
   it('should return 400 for an invalid module index', async () => {
     (Course.findById as jest.Mock).mockResolvedValue({
       modules: [{ title: 'Mod 1', completed: false }],
-      save: jest.fn(),
     });
-    const res = await request(app).patch('/api/courses/cid/modules/99/complete');
+    const res = await request(app).patch('/api/courses/cid/modules/99/complete').set(AUTH);
     expect(res.status).toBe(400);
   });
 
-  it('should toggle a module from false to true', async () => {
-    const mockCourse = {
+  it('should mark a module complete (per-user) when not yet done', async () => {
+    (Course.findById as jest.Mock).mockResolvedValue({
       _id: 'cid',
       modules: [{ title: 'Mod 1', completed: false }],
-      save: jest.fn().mockResolvedValue(undefined),
-    };
-    (Course.findById as jest.Mock).mockResolvedValue(mockCourse);
-    const res = await request(app).patch('/api/courses/cid/modules/0/complete');
+    });
+    (UserProgress.findOne as jest.Mock).mockResolvedValue(null);
+    (UserProgress.findOneAndUpdate as jest.Mock).mockResolvedValue({ completedModules: [0] });
+
+    const res = await request(app).patch('/api/courses/cid/modules/0/complete').set(AUTH);
     expect(res.status).toBe(200);
     expect(res.body.completed).toBe(true);
+    expect(res.body.completedModules).toContain(0);
   });
 
-  it('should toggle a module from true to false', async () => {
-    const mockCourse = {
+  it('should unmark a module (per-user) when already done', async () => {
+    (Course.findById as jest.Mock).mockResolvedValue({
       _id: 'cid',
       modules: [{ title: 'Mod 1', completed: true }],
-      save: jest.fn().mockResolvedValue(undefined),
-    };
-    (Course.findById as jest.Mock).mockResolvedValue(mockCourse);
-    const res = await request(app).patch('/api/courses/cid/modules/0/complete');
+    });
+    (UserProgress.findOne as jest.Mock).mockResolvedValue({ completedModules: [0] });
+    (UserProgress.findOneAndUpdate as jest.Mock).mockResolvedValue({ completedModules: [] });
+
+    const res = await request(app).patch('/api/courses/cid/modules/0/complete').set(AUTH);
     expect(res.status).toBe(200);
     expect(res.body.completed).toBe(false);
+    expect(res.body.completedModules).toEqual([]);
   });
 });
 

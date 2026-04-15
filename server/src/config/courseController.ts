@@ -3,6 +3,8 @@ import multer from 'multer';
 import path from 'path';
 import Course from './Course';
 import User from './User';
+import UserProgress from './UserProgress';
+import { AuthRequest } from './authMiddleware';
 
 // ─── A3: Multer config for document uploads ───────────────────────────────────
 const docStorage = multer.diskStorage({
@@ -138,21 +140,47 @@ export const uploadDoc = async (req: Request, res: Response) => {
   }
 };
 
-// ─── PATCH /api/courses/:courseId/modules/:moduleIndex/complete (U9) ──────────
-export const toggleModuleComplete = async (req: Request, res: Response) => {
+// ─── GET /api/courses/:courseId/progress — per-user progress (U9) ────────────
+export const getUserProgress = async (req: AuthRequest, res: Response) => {
   try {
-    const course = await Course.findById(req.params.courseId);
+    const courseId = String(req.params.courseId);
+    const userId = req.user!.id;
+
+    const progress = await UserProgress.findOne({ userId, courseId });
+    res.json({ completedModules: progress?.completedModules ?? [] });
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// ─── PATCH /api/courses/:courseId/modules/:moduleIndex/complete (U9) ──────────
+export const toggleModuleComplete = async (req: AuthRequest, res: Response) => {
+  try {
+    const courseId = String(req.params.courseId);
+    const userId = req.user!.id;
+
+    const course = await Course.findById(courseId);
     if (!course) return res.status(404).json({ message: 'Course not found' });
 
-    const index = parseInt(req.params.moduleIndex as string, 10);
+    const index = parseInt(String(req.params.moduleIndex), 10);
     if (isNaN(index) || index < 0 || index >= course.modules.length) {
       return res.status(400).json({ message: 'Invalid module index' });
     }
 
-    course.modules[index].completed = !course.modules[index].completed;
-    await course.save();
+    // Get current progress for this user
+    const progress = await UserProgress.findOne({ userId, courseId });
+    const completed = progress?.completedModules ?? [];
+    const isCompleted = completed.includes(index);
 
-    res.json({ completed: course.modules[index].completed, course });
+    const updatedProgress = await UserProgress.findOneAndUpdate(
+      { userId, courseId },
+      isCompleted
+        ? { $pull: { completedModules: index } }
+        : { $addToSet: { completedModules: index } },
+      { upsert: true, new: true }
+    );
+
+    res.json({ completed: !isCompleted, completedModules: updatedProgress?.completedModules ?? [] });
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });
   }

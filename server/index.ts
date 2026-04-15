@@ -11,6 +11,7 @@ import {
   uploadDocMiddleware,
   uploadDoc,
   toggleModuleComplete,
+  getUserProgress,
   getCourseAnalytics,
   getPurchaseAnalytics,
 } from './src/config/courseController';
@@ -37,16 +38,29 @@ import {
   reactToMessage,
   acknowledgeMessage,
 } from './src/config/messageController';
-import { logClick, getClickAnalytics } from './src/config/clickController';
+import { logClick, getClickAnalytics, getTimeOnPageAnalytics } from './src/config/clickController';
+import { exportAnalyticsCSV } from './src/config/analyticsExportController';
 import { forgotPassword, resetPassword } from './src/config/authController';
 import { getCourseInteractionAnalytics } from './src/config/courseInteractionController';
-import { getCalendarTasks } from './src/config/calendarController';
+import {
+  getCalendarTasks,
+  createCalendarTask,
+  updateCalendarTask,
+  deleteCalendarTask,
+} from './src/config/calendarController';
 import {
   createTask,
   readTask,
   updateTask,
   deleteTask,
 } from './src/config/taskController';
+import {
+  getUserMessages,
+  sendUserMessage,
+  listConversations,
+  getConversation,
+  adminReply,
+} from './src/config/directMessageController';
 
 connectDB();
 
@@ -63,20 +77,30 @@ app.post('/api/courses', createCourse);
 app.put('/api/courses/:id', updateCourse);
 app.delete('/api/courses/:id', deleteCourse);
 app.post('/api/courses/:id/docs', uploadDocMiddleware, uploadDoc);
-app.patch('/api/courses/:courseId/modules/:moduleIndex/complete', toggleModuleComplete);
+app.get('/api/courses/:courseId/progress', requireAuth, getUserProgress);
+app.patch('/api/courses/:courseId/modules/:moduleIndex/complete', requireAuth, toggleModuleComplete);
 app.get('/api/analytics/courses', getCourseAnalytics);
 app.get('/api/admin/analytics/purchases', requireAuth, requireAdmin, getPurchaseAnalytics);
 app.post('/api/analytics/click', logClick);
 app.get('/api/admin/analytics/clicks', requireAuth, requireAdmin, getClickAnalytics);
 app.get('/api/admin/analytics/courses', requireAuth, requireAdmin, getCourseInteractionAnalytics);
+app.get('/api/admin/analytics/time-on-page', requireAuth, requireAdmin, getTimeOnPageAnalytics);
+app.get('/api/admin/analytics/export/csv', requireAuth, requireAdmin, exportAnalyticsCSV);
 
-// ── Messages ─────────────────────────────────────────────────────────────────
+// ── Messages (broadcast) ──────────────────────────────────────────────────────
 app.get('/api/messages', getMessages);
 app.post('/api/messages', createMessage);
 app.post('/api/messages/:id/react', requireAuth, reactToMessage);
 app.post('/api/messages/:id/acknowledge', requireAuth, acknowledgeMessage);
 app.put('/api/messages/:id', updateMessage);
 app.delete('/api/messages/:id', deleteMessage);
+
+// ── Direct Messages (chat with Jordan) ───────────────────────────────────────
+app.get('/api/chat/messages', requireAuth, getUserMessages);
+app.post('/api/chat/messages', requireAuth, sendUserMessage);
+app.get('/api/admin/chat', requireAuth, requireAdmin, listConversations);
+app.get('/api/admin/chat/:userId', requireAuth, requireAdmin, getConversation);
+app.post('/api/admin/chat/:userId', requireAuth, requireAdmin, adminReply);
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
 app.post('/api/auth/login', loginUser);
@@ -106,6 +130,9 @@ app.delete('/api/checklist/:id', requireAuth, deleteTask);
 
 // ── Calendar ──────────────────────────────────────────────────────────────────
 app.get('/api/calendar/tasks', requireAuth, getCalendarTasks);
+app.post('/api/calendar/tasks', requireAuth, createCalendarTask);
+app.patch('/api/calendar/tasks/:id', requireAuth, updateCalendarTask);
+app.delete('/api/calendar/tasks/:id', requireAuth, deleteCalendarTask);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

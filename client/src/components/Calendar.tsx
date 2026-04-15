@@ -10,6 +10,14 @@ interface CalendarTask {
   completed: boolean;
 }
 
+type ModalMode = 'add' | 'edit';
+
+interface ModalState {
+  mode: ModalMode;
+  dateKey: string;         // for 'add'
+  task?: CalendarTask;     // for 'edit'
+}
+
 function getMonday(date: Date): Date {
   const d = new Date(date);
   const day = d.getDay();
@@ -43,11 +51,21 @@ const Calendar: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Modal state
+  const [modal, setModal] = useState<ModalState | null>(null);
+  const [formTitle, setFormTitle] = useState('');
+  const [formDesc, setFormDesc] = useState('');
+  const [formSaving, setFormSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  // Confirm delete
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
   useEffect(() => {
     document.title = 'Points of Control — Calendar';
   }, []);
 
-  useEffect(() => {
+  const fetchTasks = () => {
     if (!token) return;
     setLoading(true);
     setError(null);
@@ -56,18 +74,14 @@ const Calendar: React.FC = () => {
     })
       .then((r) => r.json())
       .then((data) => {
-        if (Array.isArray(data)) {
-          setTasks(data);
-        } else {
-          setError('Failed to load tasks');
-        }
+        if (Array.isArray(data)) setTasks(data);
+        else setError('Failed to load tasks');
         setLoading(false);
       })
-      .catch(() => {
-        setError('Failed to load calendar');
-        setLoading(false);
-      });
-  }, [monday, token]);
+      .catch(() => { setError('Failed to load calendar'); setLoading(false); });
+  };
+
+  useEffect(() => { fetchTasks(); }, [monday, token]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const goToPrev = () =>
     setMonday((m) => { const d = new Date(m); d.setDate(m.getDate() - 7); return d; });
@@ -90,6 +104,82 @@ const Calendar: React.FC = () => {
   });
 
   const todayStr = toLocalDateStr(new Date());
+
+  // ── Modal helpers ────────────────────────────────────────────────────────────
+  const openAdd = (dateKey: string) => {
+    setModal({ mode: 'add', dateKey });
+    setFormTitle('');
+    setFormDesc('');
+    setFormError(null);
+  };
+
+  const openEdit = (task: CalendarTask) => {
+    setModal({ mode: 'edit', dateKey: toLocalDateStr(new Date(task.date)), task });
+    setFormTitle(task.title);
+    setFormDesc(task.description ?? '');
+    setFormError(null);
+  };
+
+  const closeModal = () => { setModal(null); setFormSaving(false); setFormError(null); };
+
+  const handleSave = async () => {
+    if (!formTitle.trim()) { setFormError('Title is required'); return; }
+    if (!modal || !token) return;
+    setFormSaving(true);
+    setFormError(null);
+    try {
+      if (modal.mode === 'add') {
+        const res = await fetch('/api/calendar/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ title: formTitle.trim(), description: formDesc.trim() || undefined, date: modal.dateKey }),
+        });
+        if (!res.ok) throw new Error();
+        const created: CalendarTask = await res.json();
+        setTasks((prev) => [...prev, created]);
+      } else if (modal.mode === 'edit' && modal.task) {
+        const res = await fetch(`/api/calendar/tasks/${modal.task._id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ title: formTitle.trim(), description: formDesc.trim() || undefined }),
+        });
+        if (!res.ok) throw new Error();
+        const updated: CalendarTask = await res.json();
+        setTasks((prev) => prev.map((t) => (t._id === updated._id ? updated : t)));
+      }
+      closeModal();
+    } catch {
+      setFormError('Failed to save task');
+      setFormSaving(false);
+    }
+  };
+
+  const handleToggle = async (task: CalendarTask) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`/api/calendar/tasks/${task._id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ completed: !task.completed }),
+      });
+      if (!res.ok) return;
+      const updated: CalendarTask = await res.json();
+      setTasks((prev) => prev.map((t) => (t._id === updated._id ? updated : t)));
+    } catch { /* silent */ }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`/api/calendar/tasks/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      setTasks((prev) => prev.filter((t) => t._id !== id));
+      setConfirmDeleteId(null);
+    } catch { /* silent */ }
+  };
 
   return (
     <div className="dashboard-layout">
@@ -127,6 +217,11 @@ const Calendar: React.FC = () => {
                     <span className={`calendar-day-date${isToday ? ' calendar-day-date--today' : ''}`}>
                       {day.getDate()}
                     </span>
+                    <button
+                      className="cal-add-btn"
+                      onClick={() => openAdd(key)}
+                      title="Add task"
+                    >+</button>
                   </div>
                   <div className="calendar-task-list">
                     {dayTasks.length === 0 ? (
@@ -136,10 +231,26 @@ const Calendar: React.FC = () => {
                         <div
                           key={t._id}
                           className={`calendar-task${t.completed ? ' calendar-task--done' : ''}`}
-                          title={t.description}
                         >
-                          <span className="calendar-task-check">{t.completed ? '✓' : '○'}</span>
-                          <span className="calendar-task-title">{t.title}</span>
+                          <button
+                            className="calendar-task-check-btn"
+                            onClick={() => handleToggle(t)}
+                            title={t.completed ? 'Mark incomplete' : 'Mark complete'}
+                          >
+                            {t.completed ? '✓' : '○'}
+                          </button>
+                          <span className="calendar-task-title" title={t.description}>{t.title}</span>
+                          <div className="calendar-task-actions">
+                            <button className="cal-task-edit-btn" onClick={() => openEdit(t)} title="Edit">✎</button>
+                            {confirmDeleteId === t._id ? (
+                              <>
+                                <button className="btn-confirm-yes" onClick={() => handleDelete(t._id)}>✓</button>
+                                <button className="btn-confirm-no" onClick={() => setConfirmDeleteId(null)}>✕</button>
+                              </>
+                            ) : (
+                              <button className="cal-task-del-btn" onClick={() => setConfirmDeleteId(t._id)} title="Delete">✕</button>
+                            )}
+                          </div>
                         </div>
                       ))
                     )}
@@ -147,6 +258,43 @@ const Calendar: React.FC = () => {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* ── Modal ─────────────────────────────────────────────────────────── */}
+        {modal && (
+          <div className="modal-backdrop" onClick={closeModal}>
+            <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+              <h3 className="modal-title">
+                {modal.mode === 'add' ? `Add Task — ${modal.dateKey}` : 'Edit Task'}
+              </h3>
+              {formError && <p style={{ color: '#ef4444', marginBottom: '0.5rem' }}>{formError}</p>}
+              <div className="form-group">
+                <label>Title</label>
+                <input
+                  type="text"
+                  value={formTitle}
+                  onChange={(e) => setFormTitle(e.target.value)}
+                  placeholder="Task title"
+                  autoFocus
+                />
+              </div>
+              <div className="form-group">
+                <label>Description (optional)</label>
+                <textarea
+                  value={formDesc}
+                  onChange={(e) => setFormDesc(e.target.value)}
+                  placeholder="Add details…"
+                  rows={2}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                <button className="btn-submit" onClick={handleSave} disabled={formSaving}>
+                  {formSaving ? 'Saving…' : 'Save'}
+                </button>
+                <button className="btn-remove" onClick={closeModal}>Cancel</button>
+              </div>
+            </div>
           </div>
         )}
       </main>

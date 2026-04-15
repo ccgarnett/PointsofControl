@@ -1,7 +1,17 @@
 import { Request, Response } from 'express';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
+import nodemailer from 'nodemailer';
 import User from './User';
+
+const transporter = nodemailer.createTransport({
+  host: process.env.EMAIL_HOST || 'smtp.ethereal.email',
+  port: Number(process.env.EMAIL_PORT) || 587,
+  auth: {
+    user: process.env.EMAIL_USER || '',
+    pass: process.env.EMAIL_PASS || '',
+  },
+});
 
 // ── POST /api/auth/forgot-password ────────────────────────────────────────────
 export const forgotPassword = async (req: Request, res: Response) => {
@@ -22,8 +32,16 @@ export const forgotPassword = async (req: Request, res: Response) => {
         resetPasswordExpires: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
       });
 
-      const resetLink = `http://localhost:3000/reset-password/${rawToken}`;
-      console.log(`[Password Reset] Reset link for ${email}: ${resetLink}`);
+      const resetLink = `${process.env.CLIENT_URL || 'http://localhost:3000'}/reset-password/${rawToken}`;
+
+      // Send email — failure is best-effort and does not block the 200 response
+      transporter.sendMail({
+        from: process.env.EMAIL_FROM || '"Points of Control" <noreply@pointsofcontrol.com>',
+        to: email,
+        subject: 'Password Reset Request',
+        text: `You requested a password reset. Click the link below to reset your password:\n\n${resetLink}\n\nThis link expires in 1 hour. If you did not request this, you can ignore this email.`,
+        html: `<p>You requested a password reset.</p><p><a href="${resetLink}">Reset your password</a></p><p>This link expires in 1 hour.</p>`,
+      }).catch(() => {});
     }
 
     // Always return 200 — don't reveal whether the email exists
