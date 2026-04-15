@@ -17,12 +17,14 @@ Go to client/
 
 ## Test Coverage
 <!--Backend-->
-<img width="910" height="423" alt="image" src="https://github.com/user-attachments/assets/6725132a-ca8a-48b0-9b64-72581f358d36" />
+<img width="1073" height="509" alt="image" src="https://github.com/user-attachments/assets/86493bf3-1427-4c45-97f4-da8d2450e63b" />
+
 
 
 
 <!--FrontEnd-->
-<img width="845" height="707" alt="image" src="https://github.com/user-attachments/assets/3af8102c-ec60-477e-8c57-7d79b13d1bea" />
+<img width="879" height="779" alt="image" src="https://github.com/user-attachments/assets/076551b8-e3cb-4dca-9106-2986e5164822" />
+
 
 
 
