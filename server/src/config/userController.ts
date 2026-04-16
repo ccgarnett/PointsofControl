@@ -3,6 +3,7 @@ import User from './User';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import multer from 'multer';
+import stripe from './stripe';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'poc_secret_key';
 
@@ -26,6 +27,26 @@ export const registerUser = async (req: Request, res: Response) => {
     }
 
     const passwordHash = await bcrypt.hash(String(password), 10);
+
+    let stripeCustomerId: string | undefined;
+    const stripeKey = process.env.STRIPE_SECRET_KEY?.trim() ?? '';
+    const stripeConfigured = stripeKey.length > 0 &&
+     stripeKey !=='sk_test_placeholder' &&
+     (stripeKey.startsWith('sk_test_') || stripeKey.startsWith('sk_live_'));
+    
+    if (stripeConfigured) {
+      try {
+        const stripeCustomer = await stripe.customers.create({
+          ...(typeof email === 'string' && email.trim().length > 0
+            ? { email: email.trim() }
+            : {}),
+          metadata: { username: String(username) },
+        });
+        stripeCustomerId = stripeCustomer.id;
+      }catch {
+        return res.status(502).json({ message: 'Stripe customer creation failed' });
+      }
+    }
     const newUser = await User.create({ username, passwordHash, email });
     res.status(201).json(newUser);
   } catch (error) {
